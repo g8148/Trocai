@@ -15,6 +15,7 @@ Plataforma de emprestimo de ferramentas e servicos comunitarios.
 - **Backend**: Django 6 + Django REST Framework (repo separado em `back/`)
 - **Banco de dados**: PostgreSQL 18.3 via Docker Compose
 - **Autenticacao**: JWT centralizado no Django (SimpleJWT + dj-rest-auth + django-allauth)
+- **Padrão arquitetural**: API-First com desacoplamento total. (Onde o backend expõe uma API REST independente consumida pelo frontend)
 
 ---
 
