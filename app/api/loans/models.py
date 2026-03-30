@@ -22,7 +22,7 @@ class Loan(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item = models.ForeignKey(
-        "items.Item", on_delete=models.CASCADE, related_name="loans"
+        "items.Item", on_delete=models.PROTECT, related_name="loans"
     )
     borrower = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -98,6 +98,14 @@ class Reservation(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="reservations",
+    )
+    loan = models.ForeignKey(
+        "loans.Loan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reservations",
+        help_text="Emprestimo vigente que originou esta reserva",
     )
     status = models.CharField(
         max_length=20,

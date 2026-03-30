@@ -140,9 +140,8 @@ AUTHENTICATION_BACKENDS = [
 # ALLAUTH
 # =============================================================================
 
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 ACCOUNT_UNIQUE_EMAIL = True
 
@@ -200,6 +199,7 @@ REST_AUTH = {
     "JWT_AUTH_REFRESH_COOKIE": "trocai-refresh",
     "USER_DETAILS_SERIALIZER": "accounts.serializers.UserDetailSerializer",
     "REGISTER_SERIALIZER": "accounts.serializers.CustomRegisterSerializer",
+    "TOKEN_MODEL": None,
 }
 
 # =============================================================================

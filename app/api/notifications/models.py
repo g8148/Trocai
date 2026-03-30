@@ -22,7 +22,7 @@ class Notification(models.Model):
         SYSTEM = "system", "Sistema"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(
+    recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="notifications",
@@ -43,8 +43,8 @@ class Notification(models.Model):
         verbose_name_plural = "Notificacoes"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["user", "is_read"]),
+            models.Index(fields=["recipient", "is_read"]),
         ]
 
     def __str__(self):
-        return f"{self.get_type_display()} para {self.user.username}"
+        return f"{self.get_type_display()} para {self.recipient.username}"
