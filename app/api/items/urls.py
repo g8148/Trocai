@@ -1,6 +1,10 @@
 from django.urls import path
 
+from . import views
+
 app_name = "items"
 
-# URLs serao implementadas conforme as views forem desenvolvidas
-urlpatterns = []
+urlpatterns = [
+    path('', views.ItemListCreateView.as_view(), name='item-list'),
+    path('<uuid:pk>/', views.ItemDetailView.as_view(), name='item-detail'),
+]
