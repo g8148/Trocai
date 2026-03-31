@@ -56,6 +56,18 @@ class CustomRegisterSerializer(RegisterSerializer):
     city = serializers.CharField(max_length=255, required=False, allow_blank=True)
     state = serializers.CharField(max_length=2, required=False, allow_blank=True)
 
+    def validate_cpf(self, value):
+        from .models import User
+        if User.objects.filter(cpf=value).exists():
+            raise serializers.ValidationError("CPF já cadastrado.")
+        return value
+
+    def validate_email(self, value):
+        from .models import User
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Email já cadastrado.")
+        return value
+
     def get_cleaned_data(self):
         data = super().get_cleaned_data()
         data.update(
