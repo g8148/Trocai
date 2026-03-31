@@ -1,10 +1,14 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions
 
 from .models import Review
 from .serializers import ReviewSerializer
 
 
+@extend_schema(tags=['Avaliações'])
 class ReviewListCreateView(generics.ListCreateAPIView):
+    """Lista avaliações ou registra uma nova avaliação após devolução."""
+
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Review.objects.all()

@@ -219,9 +219,16 @@ CORS_ALLOW_CREDENTIALS = True
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Trocai API",
-    "DESCRIPTION": "API do sistema Trocai - Plataforma de emprestimo de ferramentas e servicos comunitarios",
+    "DESCRIPTION": "API do sistema Trocai — Plataforma de empréstimo de ferramentas e serviços comunitários.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "TAGS": [
+        {"name": "Autenticação", "description": "Registro, login, logout e tokens JWT."},
+        {"name": "Usuários", "description": "Perfil e dados públicos de usuários."},
+        {"name": "Itens", "description": "Cadastro e gerenciamento de itens para empréstimo."},
+        {"name": "Empréstimos", "description": "Solicitação, aprovação e devolução de empréstimos."},
+        {"name": "Avaliações", "description": "Avaliações após a devolução de um empréstimo."},
+    ],
 }
 
 # =============================================================================
