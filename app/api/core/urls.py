@@ -1,12 +1,29 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+
+
+def scalar_view(request):
+    html = """<!doctype html>
+<html>
+  <head>
+    <title>Trocai API</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script id="api-reference" data-url="/api/schema/"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>"""
+    return HttpResponse(html)
 
 urlpatterns = [
     # Admin
@@ -24,10 +41,11 @@ urlpatterns = [
     path("api/notifications/", include("notifications.urls")),
     path("api/reports/", include("reports.urls")),
     path("api/chat/", include("chat.urls")),
-    # Documentacao da API (Swagger / Redoc)
+    # Documentacao da API
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", scalar_view, name="scalar-ui"),
     path(
-        "api/docs/",
+        "api/docs/swagger/",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
     ),
