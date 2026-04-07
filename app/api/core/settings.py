@@ -142,7 +142,7 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_UNIQUE_EMAIL = True
 
 # =============================================================================
@@ -261,3 +261,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # =============================================================================
 
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
+
+# =============================================================================
+# EMAIL
+# =============================================================================
+
+# Em dev, emails são impressos no console. Trocar pelo backend SMTP em produção.
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+)
