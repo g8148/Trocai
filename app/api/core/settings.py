@@ -95,19 +95,29 @@ TEMPLATES = [
 WSGI_APPLICATION = "core.wsgi.application"
 
 # =============================================================================
-# DATABASE (PostgreSQL via Docker)
+# DATABASE
 # =============================================================================
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME", default="trocai"),
-        "USER": config("DB_USER", default="trocai"),
-        "PASSWORD": config("DB_PASSWORD", default="trocai_dev_2026"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
+DB_ENGINE = config("DB_ENGINE", default="postgres")
+
+if DB_ENGINE == "sqlite":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / config("SQLITE_NAME", default="db.sqlite3"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("DB_NAME", default="trocai"),
+            "USER": config("DB_USER", default="trocai"),
+            "PASSWORD": config("DB_PASSWORD", default="trocai_dev_2026"),
+            "HOST": config("DB_HOST", default="localhost"),
+            "PORT": config("DB_PORT", default="5432"),
+        }
+    }
 
 # =============================================================================
 # AUTH

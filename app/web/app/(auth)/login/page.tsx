@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { useForm } from "@tanstack/react-form"
 import { Wrench } from "lucide-react"
 
-import { loginAction } from "@/lib/auth-actions"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -17,21 +16,24 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { loginAction } from "@/lib/auth-actions"
 
 export default function LoginPage() {
   const router = useRouter()
   const [apiError, setApiError] = useState<string | null>(null)
 
   const form = useForm({
-    defaultValues: { email: "", password: "" },
+    defaultValues: { login: "", password: "" },
     onSubmit: async ({ value }) => {
       setApiError(null)
       const result = await loginAction(value)
+
       if (result.error) {
         setApiError(result.error)
-      } else {
-        router.push("/")
+        return
       }
+
+      router.push("/")
     },
   })
 
@@ -45,30 +47,30 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent>
         <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
+          onSubmit={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
             form.handleSubmit()
           }}
           className="flex flex-col gap-4"
         >
           <form.Field
-            name="email"
+            name="login"
             validators={{
               onChange: ({ value }) =>
-                !value ? "Email obrigatório" : undefined,
+                !value ? "Email ou usuario obrigatorio" : undefined,
             }}
           >
             {(field) => (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>Email</Label>
+                <Label htmlFor={field.name}>Email ou usuario</Label>
                 <Input
                   id={field.name}
-                  type="email"
-                  placeholder="seu@email.com"
+                  type="text"
+                  placeholder="seu@email.com ou seuusuario"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={(event) => field.handleChange(event.target.value)}
                 />
                 {field.state.meta.errors.length > 0 && (
                   <p className="text-xs text-destructive">
@@ -83,7 +85,7 @@ export default function LoginPage() {
             name="password"
             validators={{
               onChange: ({ value }) =>
-                !value ? "Senha obrigatória" : undefined,
+                !value ? "Senha obrigatoria" : undefined,
             }}
           >
             {(field) => (
@@ -92,10 +94,10 @@ export default function LoginPage() {
                 <Input
                   id={field.name}
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Digite sua senha"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={(event) => field.handleChange(event.target.value)}
                 />
                 {field.state.meta.errors.length > 0 && (
                   <p className="text-xs text-destructive">
@@ -108,7 +110,9 @@ export default function LoginPage() {
 
           {apiError && <p className="text-sm text-destructive">{apiError}</p>}
 
-          <form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting] as const}>
+          <form.Subscribe
+            selector={(state) => [state.canSubmit, state.isSubmitting] as const}
+          >
             {([canSubmit, isSubmitting]) => (
               <Button type="submit" className="w-full" disabled={!canSubmit}>
                 {isSubmitting ? "Entrando..." : "Entrar"}
@@ -118,7 +122,7 @@ export default function LoginPage() {
         </form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        Não tem conta?&nbsp;
+        Nao tem conta?&nbsp;
         <Link href="/register" className="text-primary hover:underline">
           Cadastre-se
         </Link>
