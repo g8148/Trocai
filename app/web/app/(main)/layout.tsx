@@ -1,19 +1,12 @@
-import { getCurrentUser } from "@/lib/auth"
-import { Footer } from "@/components/footer"
-import { Navbar } from "@/components/navbar"
+import { getMe } from "@/lib/api"
+import { MobileShell } from "@/components/mobile-shell"
 
 export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const user = await getCurrentUser()
+  const user = await getMe()
 
-  return (
-    <>
-      <Navbar user={user} />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </>
-  )
+  return <MobileShell user={user}>{children}</MobileShell>
 }

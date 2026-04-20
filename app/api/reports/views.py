@@ -1,3 +1,17 @@
-from django.shortcuts import render
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions
 
-# Create your views here.
+from .models import Report
+from .serializers import ReportSerializer
+
+
+@extend_schema(tags=["Denuncias"])
+class ReportListCreateView(generics.ListCreateAPIView):
+    serializer_class = ReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Report.objects.filter(reporter=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(reporter=self.request.user)

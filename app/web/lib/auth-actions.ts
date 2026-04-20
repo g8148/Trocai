@@ -75,7 +75,13 @@ export async function loginAction(data: {
   login: string
   password: string
 }): Promise<{ error?: string }> {
-  const login = data.login.trim()
+  const login = typeof data.login === "string" ? data.login.trim() : ""
+  const password = typeof data.password === "string" ? data.password : ""
+
+  if (!login || !password) {
+    return { error: "Informe usuario ou email e senha para entrar." }
+  }
+
   let res: Response
 
   try {
@@ -85,7 +91,7 @@ export async function loginAction(data: {
       body: JSON.stringify({
         email: login,
         username: login,
-        password: data.password,
+        password,
       }),
     })
   } catch {
@@ -113,8 +119,14 @@ export async function registerAction(data: {
   username: string
   email: string
   cpf: string
+  phone?: string
   password1: string
   password2: string
+  zip_code?: string
+  street?: string
+  neighborhood?: string
+  city?: string
+  state?: string
 }): Promise<{ fieldErrors?: FieldErrors; error?: string }> {
   let res: Response
 

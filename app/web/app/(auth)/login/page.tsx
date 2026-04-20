@@ -1,132 +1,100 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
+import { Apple, Mail, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useForm } from "@tanstack/react-form"
-import { Wrench } from "lucide-react"
+import { useState } from "react"
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { loginAction } from "@/lib/auth-actions"
+import { AppLogo } from "@/components/app-logo"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export default function LoginPage() {
   const router = useRouter()
-  const [apiError, setApiError] = useState<string | null>(null)
-
-  const form = useForm({
-    defaultValues: { login: "", password: "" },
-    onSubmit: async ({ value }) => {
-      setApiError(null)
-      const result = await loginAction(value)
-
-      if (result.error) {
-        setApiError(result.error)
-        return
-      }
-
-      router.push("/")
-    },
-  })
+  const [login, setLogin] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const socialButtons = [
+    { icon: Apple, label: "Entrar com a Apple" },
+    { icon: Mail, label: "Entrar com a Google" },
+    { icon: Search, label: "Entrar com a Microsoft" },
+  ]
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center">
-        <div className="mb-2 flex justify-center">
-          <Wrench className="h-7 w-7 text-primary" />
+    <div className="flex min-h-[calc(100svh-5rem)] flex-col justify-between">
+      <div className="space-y-10 pt-10">
+        <div className="flex justify-center">
+          <AppLogo />
         </div>
-        <CardTitle>Entrar no Trocai</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            form.handleSubmit()
-          }}
-          className="flex flex-col gap-4"
-        >
-          <form.Field
-            name="login"
-            validators={{
-              onChange: ({ value }) =>
-                !value ? "Email ou usuario obrigatorio" : undefined,
+
+        <div className="space-y-3">
+          <Input
+            value={login}
+            onChange={(event) => setLogin(event.target.value)}
+            className="h-12 rounded-2xl border-black/10 px-4 text-base"
+            placeholder="Email ou usuario"
+          />
+          <Input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="h-12 rounded-2xl border-black/10 px-4 text-base"
+            placeholder="Senha"
+          />
+          {error ? <p className="text-sm text-red-500">{error}</p> : null}
+          <Button
+            type="button"
+            disabled={isSubmitting || !login || !password}
+            onClick={async () => {
+              setIsSubmitting(true)
+              setError(null)
+              const result = await loginAction({ login, password })
+              setIsSubmitting(false)
+
+              if (result.error) {
+                setError(result.error)
+                return
+              }
+
+              router.push("/")
             }}
+            className="mt-2 h-14 w-full rounded-2xl bg-[#10182c] text-base font-semibold"
           >
-            {(field) => (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>Email ou usuario</Label>
-                <Input
-                  id={field.name}
-                  type="text"
-                  placeholder="seu@email.com ou seuusuario"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">
-                    {field.state.meta.errors[0]}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
+            {isSubmitting ? "Entrando..." : "Entrar"}
+          </Button>
+        </div>
 
-          <form.Field
-            name="password"
-            validators={{
-              onChange: ({ value }) =>
-                !value ? "Senha obrigatoria" : undefined,
-            }}
-          >
-            {(field) => (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>Senha</Label>
-                <Input
-                  id={field.name}
-                  type="password"
-                  placeholder="Digite sua senha"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">
-                    {field.state.meta.errors[0]}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
+        <div className="space-y-2">
+          {socialButtons.map(({ icon: Icon, label }) => (
+            <Button
+              key={label}
+              type="button"
+              variant="outline"
+              className="h-12 w-full rounded-2xl border-black/10 text-[1rem]"
+            >
+              <Icon className="mr-2 h-5 w-5" />
+              {label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
-          {apiError && <p className="text-sm text-destructive">{apiError}</p>}
-
-          <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting] as const}
-          >
-            {([canSubmit, isSubmitting]) => (
-              <Button type="submit" className="w-full" disabled={!canSubmit}>
-                {isSubmitting ? "Entrando..." : "Entrar"}
-              </Button>
-            )}
-          </form.Subscribe>
-        </form>
-      </CardContent>
-      <CardFooter className="justify-center text-sm text-muted-foreground">
-        Nao tem conta?&nbsp;
-        <Link href="/register" className="text-primary hover:underline">
-          Cadastre-se
+      <div className="space-y-4 pb-6 pt-10 text-center text-[#182034]">
+        <p className="text-[1rem]">
+          Ainda nao tem uma conta?{" "}
+          <Link href="/register" className="font-semibold">
+            Cadastre-se
+          </Link>
+        </p>
+        <Link href="/forgot-password" className="block text-[1rem] text-[#5d6678]">
+          Esqueceu a senha?
         </Link>
-      </CardFooter>
-    </Card>
+        <p className="text-sm leading-6 text-[#5d6678]">
+          Ao continuar, voce concorda com os Termos de Servico e a Politica de Privacidade.
+        </p>
+      </div>
+    </div>
   )
 }
