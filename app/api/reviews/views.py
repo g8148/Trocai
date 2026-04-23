@@ -17,10 +17,15 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         from rest_framework.exceptions import ValidationError
         loan = serializer.validated_data['loan']
         reviewer = self.request.user
+
         if Review.objects.filter(loan=loan, reviewer=reviewer).exists():
             raise ValidationError("Você já avaliou este empréstimo.")
+
+        if loan.status != "returned":
+            raise ValidationError("O empréstimo ainda não foi devolvido.")
+
         reviewed_user = (
             loan.lender if reviewer == loan.borrower else loan.borrower
         )
+
         serializer.save(reviewer=reviewer, reviewed_user=reviewed_user)
-        # TODO: validar loan.status == 'returned' antes de criar → raise ValidationError

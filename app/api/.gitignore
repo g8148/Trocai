@@ -31,3 +31,5 @@ Thumbs.db
 
 # Static files (coletados)
 staticfiles/
+.venv
+.venv/
