@@ -7,6 +7,19 @@ export interface AuthUser {
   first_name: string
   last_name: string
   avatar: string | null
+  cpf?: string
+  phone?: string
+  zip_code?: string
+  street?: string
+  neighborhood?: string
+  city?: string
+  state?: string
+  latitude?: string | null
+  longitude?: string | null
+  search_radius_km?: number
+  status?: "available" | "away" | "blocked"
+  email_verified?: boolean
+  phone_verified?: boolean
 }
 
 const ACCESS_KEY = "trocai_access"
@@ -26,7 +39,11 @@ export async function getRefreshToken(): Promise<string | null> {
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const store = await cookies()
   const raw = store.get(USER_KEY)?.value
-  if (!raw) return null
+
+  if (!raw) {
+    return null
+  }
+
   try {
     return JSON.parse(raw) as AuthUser
   } catch {
