@@ -108,6 +108,7 @@ if DB_ENGINE == "sqlite":
         }
     }
 else:
+    _db_sslmode = config("DB_SSLMODE", default="")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -116,6 +117,7 @@ else:
             "PASSWORD": config("DB_PASSWORD", default="trocai_dev_2026"),
             "HOST": config("DB_HOST", default="localhost"),
             "PORT": config("DB_PORT", default="5432"),
+            **({"OPTIONS": {"sslmode": _db_sslmode}} if _db_sslmode else {}),
         }
     }
 

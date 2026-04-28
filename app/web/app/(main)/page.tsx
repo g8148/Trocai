@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Bell, Menu, Search } from "lucide-react"
+import { Search } from "lucide-react"
 
 import { getItems } from "@/lib/api"
 import { ItemCard } from "@/components/item-card"
@@ -9,30 +9,23 @@ export default async function HomePage() {
   const [featured, ...catalog] = items
 
   return (
-    <div className="pb-6">
-      <header className="flex items-center gap-3 px-4 pb-5 pt-6">
-        <Link href="/account" className="rounded-2xl p-2 text-[#182034] transition hover:bg-black/5">
-          <Menu className="h-6 w-6" />
+    <div className="pb-6 pt-4">
+      {/* Barra de busca — leva para /search */}
+      <div className="px-4 pb-5">
+        <Link href="/search">
+          <div className="flex items-center gap-3 rounded-2xl bg-[#ebebea] px-4 py-3 text-[#8a92a3]">
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="text-sm">Buscar itens próximos...</span>
+          </div>
         </Link>
-        <span className="text-[1.4rem] font-medium tracking-[-0.04em] text-[#182034]">
-          Inicio
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <Link href="/search" className="rounded-2xl p-2 text-[#182034] transition hover:bg-black/5">
-            <Search className="h-5 w-5" />
-          </Link>
-          <Link href="/notifications" className="rounded-2xl p-2 text-[#182034] transition hover:bg-black/5">
-            <Bell className="h-5 w-5" />
-          </Link>
-        </div>
-      </header>
+      </div>
 
       <section className="space-y-6 px-4">
         {featured ? (
           <ItemCard item={featured} href={`/items/${featured.id}`} featured />
         ) : (
-          <div className="rounded-[30px] border border-dashed border-black/10 bg-[#f7f9fc] p-8 text-center text-[#5d6678]">
-            Ainda nao existem itens cadastrados para exibir aqui.
+          <div className="rounded-[30px] border border-dashed border-black/10 bg-[#efeeec] p-8 text-center text-[#5d6678]">
+            Ainda não existem itens cadastrados para exibir aqui.
           </div>
         )}
 
@@ -42,8 +35,8 @@ export default async function HomePage() {
               <ItemCard key={item.id} item={item} href={`/items/${item.id}`} />
             ))
           ) : featured ? (
-            <div className="rounded-[26px] border border-dashed border-black/10 bg-[#f7f9fc] p-6 text-center text-[#5d6678]">
-              Adicione mais itens no catalogo para enriquecer a busca.
+            <div className="rounded-[26px] border border-dashed border-black/10 bg-[#efeeec] p-6 text-center text-[#5d6678]">
+              Adicione mais itens no catálogo para enriquecer a busca.
             </div>
           ) : null}
         </div>

@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { getItems } from "@/lib/api"
 import { ItemCard } from "@/components/item-card"
-import { MobileHeader } from "@/components/mobile-header"
 
 export default async function SearchPage({
   searchParams,
@@ -17,56 +16,51 @@ export default async function SearchPage({
 
   return (
     <div className="pb-6">
-      <MobileHeader title="Pesquisa" backHref="/" />
-      <div className="space-y-5 px-5 pb-6 pt-5">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          {[
-            ["", "Todos"],
-            ["service", "Servicos"],
-            ["tool", "Ferramentas"],
-          ].map(([value, label]) => {
+      <div className="space-y-4 px-4 pb-4 pt-4">
+        <form>
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Buscar itens..."
+            autoFocus
+            className="h-11 w-full rounded-2xl border border-black/10 bg-[#ebebea] px-4 text-sm text-[#182034] placeholder:text-[#8a92a3] outline-none focus:border-[#2fb1c2] focus:bg-white transition"
+          />
+          <button type="submit" hidden />
+        </form>
+
+        <div className="flex gap-2">
+          {([["", "Todos"], ["service", "Serviços"], ["tool", "Ferramentas"]] as const).map(([value, label]) => {
             const active = (type ?? "") === value
             const params = new URLSearchParams()
-            if (q) {
-              params.set("q", q)
-            }
-            if (value) {
-              params.set("type", value)
-            }
-
+            if (q) params.set("q", q)
+            if (value) params.set("type", value)
             return (
               <Link
                 key={label}
                 href={`/search?${params.toString()}`}
-                className={`rounded-[24px] border px-3 py-3 text-sm ${active ? "border-[#10182c] bg-[#10182c] text-white" : "border-black/8 bg-white text-[#182034]"}`}
+                className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
+                  active
+                    ? "border-[#0d1424] bg-[#0d1424] text-white"
+                    : "border-black/10 bg-white text-[#5d6678] hover:border-black/20"
+                }`}
               >
                 {label}
               </Link>
             )
           })}
         </div>
+      </div>
 
-        <form className="space-y-4">
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Martelo"
-            className="h-12 w-full rounded-2xl border border-black/10 px-4 text-base outline-none"
-          />
-          <button type="submit" hidden />
-        </form>
-
-        <div className="space-y-4">
-          {items.length > 0 ? (
-            items.map((item) => (
-              <ItemCard key={item.id} item={item} href={`/items/${item.id}`} />
-            ))
-          ) : (
-            <div className="rounded-[24px] border border-dashed border-black/10 bg-[#f7f9fc] p-8 text-center text-[#5d6678]">
-              Nenhum resultado encontrado para sua busca.
-            </div>
-          )}
-        </div>
+      <div className="space-y-4 px-4">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <ItemCard key={item.id} item={item} href={`/items/${item.id}`} />
+          ))
+        ) : (
+          <div className="rounded-2xl border border-dashed border-black/10 bg-[#efeeec] p-8 text-center text-sm text-[#5d6678]">
+            Nenhum resultado encontrado.
+          </div>
+        )}
       </div>
     </div>
   )
