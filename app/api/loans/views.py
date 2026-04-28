@@ -3,6 +3,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers
+from django.db import transaction
 
 from .models import Loan
 from .serializers import LoanSerializer
@@ -11,12 +12,12 @@ from .serializers import LoanSerializer
 @extend_schema(tags=['Empréstimos'])
 class LoanListCreateView(generics.ListCreateAPIView):
     """Lista os empréstimos do usuário ou solicita um novo empréstimo."""
-    
+
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Loan.objects.all()
 
-    def perform_create(self, serializer): 
+    def perform_create(self, serializer):
         item = serializer.validated_data['item']
 
         if item.availability != "available":
@@ -61,6 +62,13 @@ class LoanApproveView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        # Trava de segurança: só aprovaa solicitação se o item estiver pendente
+        if loan.status != "pending":
+            return Response(
+                {"detail": "Apenas empréstimos pendentes podem ser aprovados."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         loan.status = "approved"
         loan.save()
 
@@ -93,13 +101,21 @@ class LoanReturnView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        loan.status = "returned"
-        loan.actual_return_date = timezone.now()
+        # Trava de segurança: só permite registrar a devolução se o empréstimo estiver aprovado ou em andamento
+        if loan.status not in ["approved", "in_progress"]:
+            return Response(
+                {"detail": "Este item não está atualmente emprestado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        loan.item.availability = "available"
-        loan.item.save()
+        # Uso de transação atômica para garantir que ambos os saves ocorram
+        with transaction.atomic():
+            loan.status = "returned"
+            loan.actual_return_date = timezone.now()
+            loan.save()
 
-        loan.save()
+            loan.item.availability = "available"
+            loan.item.save()
 
         return Response(
             {"detail": "Loan returned"},
