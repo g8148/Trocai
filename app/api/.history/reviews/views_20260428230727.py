@@ -1,6 +1,5 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions
-from rest_framework.exceptions import ValidationError
 
 from .models import Review
 from .serializers import ReviewSerializer
@@ -15,6 +14,7 @@ class ReviewListCreateView(generics.ListCreateAPIView):
     queryset = Review.objects.all()
 
     def perform_create(self, serializer):
+        from rest_framework.exceptions import ValidationError
         loan = serializer.validated_data['loan']
         reviewer = self.request.user
 
@@ -22,8 +22,8 @@ class ReviewListCreateView(generics.ListCreateAPIView):
             raise ValidationError("O empréstimo ainda não foi devolvido.")
         if Review.objects.filter(loan=loan, reviewer=reviewer).exists():
             raise ValidationError("Você já avaliou este empréstimo.")
-
         reviewed_user = (
             loan.lender if reviewer == loan.borrower else loan.borrower
         )
         serializer.save(reviewer=reviewer, reviewed_user=reviewed_user)
+        # TODO: validar loan.status == 'returned' antes de criar → raise ValidationError
