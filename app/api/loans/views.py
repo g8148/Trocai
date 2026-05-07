@@ -1,9 +1,14 @@
+from django.db import transaction
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import serializers
-from django.db import transaction
+
+from items.models import Item
 
 from .models import Loan
 from .serializers import LoanSerializer
@@ -15,21 +20,21 @@ class LoanListCreateView(generics.ListCreateAPIView):
 
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Loan.objects.all()
 
+    def get_queryset(self):
+        user = self.request.user
+        return Loan.objects.filter(Q(borrower=user) | Q(lender=user))
+
+    @transaction.atomic
     def perform_create(self, serializer):
         item = serializer.validated_data['item']
 
-        if item.availability != "available":
-            raise serializers.ValidationError("Item not available")
+        if item.availability != Item.AvailabilityChoices.AVAILABLE:
+            raise ValidationError("Item não disponível")
 
-        item.availability = "reserved"
+        serializer.save(borrower=self.request.user, lender=item.owner)
+        item.availability = Item.AvailabilityChoices.RESERVED
         item.save()
-
-        serializer.save(
-            borrower=self.request.user,
-            lender=item.owner
-        )
 
 
 @extend_schema(tags=['Empréstimos'])
@@ -38,7 +43,10 @@ class LoanDetailView(generics.RetrieveAPIView):
 
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Loan.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+        return Loan.objects.filter(Q(borrower=user) | Q(lender=user))
 
 
 @extend_schema(tags=['Empréstimos'])
@@ -47,35 +55,24 @@ class LoanApproveView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, pk):
-        try:
-            loan = Loan.objects.get(pk=pk)
-        except Loan.DoesNotExist:
-            return Response(
-                {"detail": "Loan not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        loan = get_object_or_404(Loan, pk=pk)
 
-        if loan.lender != request.user:
-            return Response(
-                {"detail": "Not allowed"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if request.user != loan.lender:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
-        # Trava de segurança: só aprovaa solicitação se o item estiver pendente
-        if loan.status != "pending":
+        if loan.status != Loan.StatusChoices.PENDING:
             return Response(
                 {"detail": "Apenas empréstimos pendentes podem ser aprovados."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        loan.status = "approved"
+        loan.status = Loan.StatusChoices.APPROVED
+        loan.item.availability = Item.AvailabilityChoices.BORROWED
+        loan.item.save()
         loan.save()
-
-        return Response(
-            {"detail": "Loan approved"},
-            status=status.HTTP_200_OK
-        )
+        return Response(status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=['Empréstimos'])
@@ -84,40 +81,22 @@ class LoanReturnView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, pk):
-        from django.utils import timezone
+        loan = get_object_or_404(Loan, pk=pk)
 
-        try:
-            loan = Loan.objects.get(pk=pk)
-        except Loan.DoesNotExist:
+        if request.user != loan.lender:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if loan.status not in {Loan.StatusChoices.APPROVED, Loan.StatusChoices.IN_PROGRESS}:
             return Response(
-                {"detail": "Loan not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Apenas empréstimos aprovados ou em andamento podem ser devolvidos."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if loan.lender != request.user:
-            return Response(
-                {"detail": "Not allowed"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        # Trava de segurança: só permite registrar a devolução se o empréstimo estiver aprovado ou em andamento
-        if loan.status not in ["approved", "in_progress"]:
-            return Response(
-                {"detail": "Este item não está atualmente emprestado."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Uso de transação atômica para garantir que ambos os saves ocorram
-        with transaction.atomic():
-            loan.status = "returned"
-            loan.actual_return_date = timezone.now()
-            loan.save()
-
-            loan.item.availability = "available"
-            loan.item.save()
-
-        return Response(
-            {"detail": "Loan returned"},
-            status=status.HTTP_200_OK
-        )
+        loan.status = Loan.StatusChoices.RETURNED
+        loan.actual_return_date = timezone.now()
+        loan.item.availability = Item.AvailabilityChoices.AVAILABLE
+        loan.item.save()
+        loan.save()
+        return Response(status=status.HTTP_200_OK)
