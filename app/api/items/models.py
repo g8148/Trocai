@@ -132,7 +132,7 @@ class ItemImage(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="items/")
+    image = models.URLField(max_length=500)
     is_cover = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

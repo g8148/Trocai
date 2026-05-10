@@ -47,6 +47,12 @@ export interface ItemOwner {
   avatar: string | null
 }
 
+export interface ItemImage {
+  id: string
+  image: string
+  is_cover: boolean
+}
+
 export interface ItemSummary {
   id: string
   name: string
@@ -62,6 +68,7 @@ export interface ItemSummary {
   availability: string
   allow_reservation: boolean
   cover_image: string | null
+  images: ItemImage[]
   created_at: string
 }
 
@@ -211,17 +218,21 @@ export async function getMe() {
   )
 }
 
-export async function getItems(search?: string, type?: "tool" | "service", owner?: string) {
+export async function getItems(
+  search?: string,
+  type?: "tool" | "service",
+  owner?: string,
+  condition?: string,
+  availability?: string,
+  segregation?: string,
+) {
   const params = new URLSearchParams()
-  if (search) {
-    params.set("search", search)
-  }
-  if (type) {
-    params.set("type", type)
-  }
-  if (owner) {
-    params.set("owner", owner)
-  }
+  if (search) params.set("search", search)
+  if (type) params.set("type", type)
+  if (owner) params.set("owner", owner)
+  if (condition) params.set("condition", condition)
+  if (availability) params.set("availability", availability)
+  if (segregation) params.set("segregation", segregation)
 
   const query = params.toString()
   const path = `/api/items/${query ? `?${query}` : ""}`

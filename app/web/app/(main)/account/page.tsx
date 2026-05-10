@@ -1,82 +1,132 @@
 import Link from "next/link"
-import { UserRound, Mail, Phone, MapPin, FileText } from "lucide-react"
+import { Mail, Phone, MapPin, FileText, ChevronRight, LogOut, Ruler } from "lucide-react"
 
 import { getMe } from "@/lib/api"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { logoutAction } from "@/lib/auth-actions"
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  available: { label: "Disponível", className: "bg-green-100 text-green-700" },
-  away: { label: "Ausente", className: "bg-yellow-100 text-yellow-700" },
-  blocked: { label: "Bloqueado", className: "bg-red-100 text-red-700" },
+const STATUS: Record<string, { label: string; className: string }> = {
+  available: { label: "Disponível", className: "bg-emerald-50 text-emerald-700" },
+  away: { label: "Ausente", className: "bg-amber-50 text-amber-700" },
+  blocked: { label: "Bloqueado", className: "bg-red-50 text-red-700" },
 }
 
-function ProfileField({ icon: Icon, label, value }: {
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
   icon: React.ElementType
   label: string
   value: string | null | undefined
 }) {
   if (!value) return null
   return (
-    <div className="flex items-start gap-3">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#5d6678]" />
-      <div>
-        <p className="text-xs text-[#5d6678]">{label}</p>
-        <p className="text-sm font-medium text-[#182034]">{value}</p>
+    <div className="flex items-center gap-3 py-3">
+      <Icon className="h-4 w-4 shrink-0 text-[#c8ccd4]" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-[#b0b8c5]">
+          {label}
+        </p>
+        <p className="truncate text-sm font-medium text-[#182034]">{value}</p>
       </div>
     </div>
   )
 }
 
+function ActionLink({
+  href,
+  icon: Icon,
+  label,
+  description,
+}: {
+  href: string
+  icon: React.ElementType
+  label: string
+  description?: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-2xl border border-black/6 bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(17,24,39,0.04)] transition hover:bg-[#f7f8fb]"
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f4f5f7]">
+        <Icon className="h-4 w-4 text-[#5d6678]" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-[#182034]">{label}</p>
+        {description && <p className="text-xs text-[#8a92a3]">{description}</p>}
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-[#c8ccd4]" />
+    </Link>
+  )
+}
+
 export default async function AccountPage() {
   const user = await getMe()
-
   if (!user) return null
 
-  const statusInfo = STATUS_LABELS[user.status] ?? STATUS_LABELS.available
+  const statusInfo = STATUS[user.status] ?? STATUS.available
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username
-  const location = [user.city, user.state].filter(Boolean).join(", ")
+  const location = [user.street, user.neighborhood, user.city, user.state]
+    .filter(Boolean)
+    .join(", ")
   const maskedCpf = user.cpf
     ? user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
     : null
+  const initial = (user.first_name?.[0] ?? user.username[0]).toUpperCase()
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      {/* Avatar + nome */}
-      <div className="flex flex-col items-center gap-3 pb-6 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#e8f7f9]">
-          <UserRound className="h-11 w-11 text-[#2fb1c2]" />
+    <div className="mx-auto max-w-lg px-4 py-6 pb-12">
+      {/* Avatar + identidade */}
+      <div className="mb-8 flex flex-col items-center gap-3 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#10182c] text-2xl font-bold text-white">
+          {initial}
         </div>
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[#182034]">{fullName}</h1>
-          <p className="text-sm text-[#5d6678]">@{user.username}</p>
+          <p className="mt-0.5 text-sm text-[#8a92a3]">@{user.username}</p>
         </div>
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusInfo.className}`}>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-medium ${statusInfo.className}`}
+        >
           {statusInfo.label}
         </span>
       </div>
 
-      <Separator />
-
-      {/* Dados do perfil */}
-      <div className="space-y-4 py-6">
-        <ProfileField icon={Mail} label="Email" value={user.email} />
-        <ProfileField icon={Phone} label="Telefone" value={user.phone} />
-        <ProfileField icon={FileText} label="CPF" value={maskedCpf} />
-        <ProfileField icon={MapPin} label="Localização" value={location || user.street} />
+      {/* Info */}
+      <div className="mb-6 divide-y divide-black/5 rounded-2xl border border-black/6 bg-white px-4 shadow-[0_2px_8px_rgba(17,24,39,0.04)]">
+        <InfoRow icon={Mail} label="Email" value={user.email} />
+        <InfoRow icon={Phone} label="Telefone" value={user.phone} />
+        {location && <InfoRow icon={MapPin} label="Localização" value={location} />}
+        {maskedCpf && <InfoRow icon={FileText} label="CPF" value={maskedCpf} />}
       </div>
-
-      <Separator />
 
       {/* Ações */}
-      <div className="flex flex-col gap-3 pt-6">
-        <Button asChild className="h-11 rounded-2xl bg-[#10182c] text-base font-semibold">
-          <Link href="/account/profile">Editar perfil</Link>
-        </Button>
-        <Button asChild variant="outline" className="h-11 rounded-2xl border-black/10 text-base">
-          <Link href="/account/distance">Configurar distância</Link>
-        </Button>
+      <div className="mb-8 flex flex-col gap-2.5">
+        <ActionLink
+          href="/account/profile"
+          icon={FileText}
+          label="Editar perfil"
+          description="Nome, contato e endereço"
+        />
+        <ActionLink
+          href="/account/distance"
+          icon={Ruler}
+          label="Distância de busca"
+          description={user.search_radius_km ? `${user.search_radius_km} km` : undefined}
+        />
       </div>
+
+      {/* Sair */}
+      <form action={logoutAction}>
+        <button
+          type="submit"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 py-3 text-sm font-medium text-red-500 transition hover:bg-red-50"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair da conta
+        </button>
+      </form>
     </div>
   )
 }

@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-[#f5f5f3] p-6">
+    <div className="flex min-h-svh items-center justify-center bg-white p-6">
       <div className="w-full max-w-90">
         {/* Logo */}
         <div className="mb-9 flex justify-center">

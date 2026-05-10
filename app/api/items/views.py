@@ -41,9 +41,14 @@ class ItemListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = self.queryset.filter(is_active=True)
-        search = self.request.query_params.get("search")
-        category_type = self.request.query_params.get("type")
-        owner_id = self.request.query_params.get("owner")
+        p = self.request.query_params
+
+        category_type = p.get("type")
+        owner_id = p.get("owner")
+        search = p.get("search")
+        condition = p.get("condition")
+        availability = p.get("availability")
+        segregation = p.get("segregation")
 
         if category_type in {"tool", "service"}:
             queryset = queryset.filter(subcategory__category__type=category_type)
@@ -52,6 +57,15 @@ class ItemListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(owner=self.request.user)
         elif owner_id:
             queryset = queryset.filter(owner_id=owner_id)
+
+        if condition in {"new", "good", "used", "worn"}:
+            queryset = queryset.filter(condition=condition)
+
+        if availability in {"available", "borrowed", "reserved", "unavailable"}:
+            queryset = queryset.filter(availability=availability)
+
+        if segregation in {"hobby", "semi_professional", "professional"}:
+            queryset = queryset.filter(segregation=segregation)
 
         if search:
             queryset = queryset.filter(

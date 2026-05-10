@@ -14,6 +14,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -47,8 +48,7 @@ const ACCOUNT_LINKS: Array<{
   label: string
 }> = [
   { href: "/account", label: "Meu perfil" },
-  { label: "Meus pedidos" },
-  { label: "Produtos/Serv." },
+  { href: "/account/items", label: "Meus itens" },
   { href: "/account/distance", label: "Distância" },
 ]
 
@@ -75,7 +75,9 @@ function NavLinkItem({
   onClose: () => void
 }) {
   const router = useRouter()
-  const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
+  const active = exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`)
 
   return (
     <button
@@ -86,12 +88,13 @@ function NavLinkItem({
       className={cn(
         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
         "hover:bg-[#f1f3f6]",
-        active
-          ? "font-semibold text-[#10182c]"
-          : "text-[#5d6678]"
+        active ? "font-semibold text-[#10182c]" : "text-[#5d6678]"
       )}
     >
-      <Icon size={18} className={active ? "text-[#2fb1c2]" : "text-[#5d6678]"} />
+      <Icon
+        size={18}
+        className={active ? "text-[#2fb1c2]" : "text-[#5d6678]"}
+      />
       {label}
     </button>
   )
@@ -159,10 +162,11 @@ function NavSheetContent({ user }: { user: AppUser | null }) {
         side="left"
         className="flex w-72 flex-col gap-0 overflow-y-auto p-0"
       >
+        <SheetTitle className="sr-only">Menu</SheetTitle>
         {/* User section */}
         {user && (
           <>
-            <div className="flex flex-col items-center gap-3 px-5 pb-5 pt-2">
+            <div className="flex flex-col items-center gap-3 px-5 pt-2 pb-5">
               {/* Avatar */}
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e8f7f9]">
                 <UserRound size={28} className="text-[#2fb1c2]" />
@@ -223,7 +227,7 @@ function NavSheetContent({ user }: { user: AppUser | null }) {
 
         {/* Account section */}
         <div className="flex flex-col gap-1 px-3 py-3">
-          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-[#5d6678]">
+          <p className="px-3 pb-1 text-xs font-semibold tracking-wider text-[#5d6678] uppercase">
             Minha conta
           </p>
           {ACCOUNT_LINKS.map((link) =>
@@ -238,7 +242,7 @@ function NavSheetContent({ user }: { user: AppUser | null }) {
             ) : (
               <span
                 key={link.label}
-                className="px-3 py-2 text-sm text-[#a0a8b5] cursor-default"
+                className="cursor-default px-3 py-2 text-sm text-[#a0a8b5]"
               >
                 {link.label}
               </span>
@@ -250,7 +254,7 @@ function NavSheetContent({ user }: { user: AppUser | null }) {
 
         {/* Support section */}
         <div className="flex flex-col gap-1 px-3 py-3">
-          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-[#5d6678]">
+          <p className="px-3 pb-1 text-xs font-semibold tracking-wider text-[#5d6678] uppercase">
             Suporte
           </p>
           {SUPPORT_LINKS.map((link) => (

@@ -80,7 +80,7 @@ class ItemSerializer(serializers.ModelSerializer):
     def get_cover_image(self, obj):
         cover = next((image for image in obj.images.all() if image.is_cover), None)
         if cover:
-            return cover.image.url
+            return cover.image
 
         first_image = next(iter(obj.images.all()), None)
-        return first_image.image.url if first_image else None
+        return first_image.image if first_image else None

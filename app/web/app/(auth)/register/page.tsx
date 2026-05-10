@@ -6,7 +6,7 @@ import { RegisterFlow } from "@/components/forms/register-flow"
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-svh bg-[#f5f5f3] flex items-center justify-center p-4">
+    <div className="min-h-svh bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <Card>
           <CardContent className="p-6 md:p-8">
