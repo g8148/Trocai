@@ -64,10 +64,6 @@ class Loan(models.Model):
     # Metadata
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Soft delete
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
     class Meta:
         verbose_name = "Emprestimo"
         verbose_name_plural = "Emprestimos"

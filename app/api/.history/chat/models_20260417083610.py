@@ -57,10 +57,6 @@ class Message(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # Soft delete
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
     class Meta:
         verbose_name = "Mensagem"
         verbose_name_plural = "Mensagens"

@@ -1,4 +1,5 @@
 import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -113,10 +114,6 @@ class Item(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Soft delete
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
     class Meta:
         verbose_name = "Item"
         verbose_name_plural = "Itens"
@@ -135,7 +132,7 @@ class ItemImage(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="images")
-    image = models.URLField(max_length=500)
+    image = models.ImageField(upload_to="items/")
     is_cover = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
