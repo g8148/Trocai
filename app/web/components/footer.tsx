@@ -1,27 +1,46 @@
 import Link from "next/link"
-import { Separator } from "@/components/ui/separator"
 
 export function Footer() {
   return (
-    <footer className="w-full border-t bg-background">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-6 sm:flex-row sm:justify-between">
-        <span className="text-sm font-semibold tracking-tight">Trocai</span>
+    <footer className="mt-8 border-t border-black/5 bg-[#fefefe]">
+      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          {/* Marca */}
+          <div className="space-y-2">
+            <p className="text-[2.6rem] leading-none font-semibold tracking-[-0.06em] text-[#182034]">
+              Trocai
+            </p>
+            <p className="text-sm text-[#5d6678]">
+              Empréstimo de ferramentas entre vizinhos.
+            </p>
+          </div>
 
-        <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Link href="#" className="px-2 transition-colors hover:text-foreground">
-            Sobre
-          </Link>
-          <Separator orientation="vertical" className="h-3" />
-          <Link href="#" className="px-2 transition-colors hover:text-foreground">
-            Como funciona
-          </Link>
-          <Separator orientation="vertical" className="h-3" />
-          <Link href="#" className="px-2 transition-colors hover:text-foreground">
-            Contato
-          </Link>
-        </nav>
+          {/* Links */}
+          <nav className="flex flex-col gap-2 text-sm text-[#5d6678]">
+            <Link
+              href="/sobre"
+              className="w-fit transition-colors hover:text-[#182034]"
+            >
+              Sobre o projeto
+            </Link>
+            {/*<Link
+              href="#"
+              className="w-fit transition-colors hover:text-[#182034]"
+            >
+              Como funciona
+            </Link>*/}
+            <Link
+              href="/contato"
+              className="w-fit transition-colors hover:text-[#182034]"
+            >
+              Contato
+            </Link>
+          </nav>
+        </div>
 
-        <p className="text-xs text-muted-foreground">© 2026 Trocai</p>
+        <p className="mt-8 border-t border-black/5 pt-5 text-xs text-[#5d6678]">
+          © 2026 Trocai · Projeto acadêmico UNOESC
+        </p>
       </div>
     </footer>
   )
