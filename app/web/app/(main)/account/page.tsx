@@ -8,12 +8,11 @@ import {
   LogOut,
   PackagePlus,
   Ruler,
-  SquarePen,
 } from "lucide-react"
 
 import { getItems, getMe } from "@/lib/api"
 import { logoutAction } from "@/lib/auth-actions"
-import { ItemCard } from "@/components/item-card"
+import { AccountItemsSection } from "@/components/account-items-section"
 
 const STATUS: Record<string, { label: string; className: string }> = {
   available: { label: "Disponível", className: "bg-emerald-50 text-emerald-700" },
@@ -135,42 +134,11 @@ export default async function AccountPage() {
         />
       </div>
 
-      <div className="mb-8 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#182034]">Meus itens</h2>
-          <Link
-            href="/items/new"
-            className="rounded-full border border-black/8 px-3 py-1.5 text-xs font-medium text-[#182034] transition hover:bg-black/5"
-          >
-            Novo item
-          </Link>
-        </div>
-
-        {ownItems.length > 0 ? (
-          <div className="space-y-3">
-            {ownItems.map((item) => (
-              <div key={item.id} className="space-y-2">
-                <ItemCard item={item} href={`/items/${item.id}`} />
-                <Link
-                  href={`/items/${item.id}/edit`}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-black/8 px-4 py-2 text-sm font-medium text-[#182034] transition hover:bg-black/5"
-                >
-                  <SquarePen className="h-4 w-4" />
-                  Editar item
-                </Link>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-black/10 bg-[#f7f8fb] px-5 py-8 text-center">
-            <p className="text-base font-medium text-[#182034]">
-              Voce ainda nao publicou nenhum item.
-            </p>
-            <p className="mt-1 text-sm text-[#8a92a3]">
-              Crie seu primeiro anuncio para aparecer no catalogo.
-            </p>
-          </div>
-        )}
+      <div className="mb-8">
+        <AccountItemsSection
+          items={ownItems}
+          description="Acompanhe, edite e publique os seus anuncios."
+        />
       </div>
 
       {/* Sair */}

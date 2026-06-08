@@ -2,21 +2,25 @@
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 export function SuccessDialog({
   open,
   onOpenChange,
   title,
   description,
+  actionLabel,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
   description: string
+  actionLabel?: string
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -30,6 +34,13 @@ export function SuccessDialog({
         <DialogDescription className="mt-6 whitespace-pre-line text-[1.55rem] leading-[1.28] tracking-[-0.04em] text-[#182034]">
           {description}
         </DialogDescription>
+        {actionLabel ? (
+          <DialogClose asChild>
+            <Button className="mt-6 h-12 rounded-2xl bg-[#10182c] text-sm font-semibold text-white hover:bg-[#243149]">
+              {actionLabel}
+            </Button>
+          </DialogClose>
+        ) : null}
       </DialogContent>
     </Dialog>
   )

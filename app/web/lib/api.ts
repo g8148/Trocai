@@ -67,6 +67,8 @@ export interface ItemSummary {
   estimated_value: string | null
   availability: string
   allow_reservation: boolean
+  is_active: boolean
+  times_borrowed: number
   cover_image: string | null
   images: ItemImage[]
   created_at: string
@@ -144,16 +146,56 @@ type ApiRequestOptions = {
   body?: FormData | Record<string, unknown>
 }
 
-function normalizeErrorMessage(detail: unknown) {
+const FIELD_LABELS: Record<string, string> = {
+  non_field_errors: "Formulario",
+  name: "Nome",
+  description: "Descricao",
+  subcategory: "Subcategoria",
+  condition: "Condicao",
+  segregation: "Segregacao",
+  estimated_value: "Valor estimado",
+  allow_reservation: "Reservas",
+  image_urls: "Fotos",
+  email: "Email",
+  username: "Usuario",
+  password: "Senha",
+  password1: "Senha",
+  password2: "Confirmacao de senha",
+}
+
+function formatFieldLabel(key: string) {
+  if (FIELD_LABELS[key]) {
+    return FIELD_LABELS[key]
+  }
+
+  return key
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function collectErrorMessages(detail: unknown, path?: string): string[] {
   if (typeof detail === "string") {
-    return detail
+    return [path ? `${path}: ${detail}` : detail]
   }
 
-  if (Array.isArray(detail) && typeof detail[0] === "string") {
-    return detail[0]
+  if (Array.isArray(detail)) {
+    return detail.flatMap((entry) => collectErrorMessages(entry, path))
   }
 
-  return "Nao foi possivel concluir a requisicao."
+  if (detail && typeof detail === "object") {
+    return Object.entries(detail as Record<string, unknown>).flatMap(
+      ([key, value]) => collectErrorMessages(value, formatFieldLabel(key))
+    )
+  }
+
+  return []
+}
+
+function normalizeErrorMessage(detail: unknown) {
+  const [firstMessage] = collectErrorMessages(detail)
+  return firstMessage ?? "Nao foi possivel concluir a requisicao."
 }
 
 export async function apiRequest<T>(
@@ -254,10 +296,19 @@ export async function getItem(id: string) {
 
 export async function getCategories(type?: "tool" | "service") {
   const query = type ? `?type=${type}` : ""
-  return safeRequest<CategoryGroup[]>(
-    () => apiRequest<CategoryGroup[]>(`/api/items/categories/${query}`),
+  const response = await safeRequest<ApiListResponse<CategoryGroup> | CategoryGroup[]>(
+    () =>
+      apiRequest<ApiListResponse<CategoryGroup> | CategoryGroup[]>(
+        `/api/items/categories/${query}`
+      ),
     []
   )
+
+  if (Array.isArray(response)) {
+    return response
+  }
+
+  return response.results ?? []
 }
 
 export async function getNotifications() {

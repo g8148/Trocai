@@ -6,6 +6,7 @@ import { Search, SlidersHorizontal } from "lucide-react"
 import Link from "next/link"
 
 import type { ItemSummary } from "@/lib/api"
+import { getItemPrimaryImage } from "@/lib/item-visuals"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
@@ -200,16 +201,16 @@ export function DesktopSearchBar() {
   const showDropdown = focused && q.trim().length >= 2 && (loading || results.length > 0)
 
   return (
-    <div ref={containerRef} className="relative ml-auto w-80">
+    <div ref={containerRef} className="relative ml-auto w-[25rem]">
       <form onSubmit={handleSubmit}>
         <div
-          className={`flex h-10 items-center rounded-full border transition-colors ${
+          className={`flex h-11 items-center rounded-full border shadow-[0_10px_26px_rgba(17,24,39,0.04)] transition-all ${
             focused
-              ? "border-[#2fb1c2] bg-white"
-              : "border-black/10 bg-[#f0f1f2] hover:border-black/20"
+              ? "border-[#2fb1c2]/45 bg-white ring-4 ring-[#2fb1c2]/10"
+              : "border-black/6 bg-white/82 hover:border-black/12"
           }`}
         >
-          <Search className="ml-3.5 h-4 w-4 shrink-0 text-[#8a92a3]" />
+          <Search className="ml-4 h-4 w-4 shrink-0 text-[#8a92a3]" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -225,7 +226,7 @@ export function DesktopSearchBar() {
               <button
                 type="button"
                 aria-label="Filtros"
-                className={`relative mr-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all hover:bg-black/5 ${
+                className={`relative mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all hover:bg-[#f2f6f7] ${
                   isSearchPage || focused ? "opacity-100" : "pointer-events-none opacity-0"
                 } ${activeFilterCount > 0 ? "text-[#2fb1c2]" : "text-[#8a92a3] hover:text-[#182034]"}`}
               >
@@ -319,9 +320,9 @@ export function DesktopSearchBar() {
                   onClick={close}
                   className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-[#f7f8fb]"
                 >
-                  {item.cover_image ? (
+                  {getItemPrimaryImage(item) ? (
                     <img
-                      src={item.cover_image}
+                      src={getItemPrimaryImage(item) ?? undefined}
                       alt={item.name}
                       className="h-9 w-9 shrink-0 rounded-lg object-cover"
                     />

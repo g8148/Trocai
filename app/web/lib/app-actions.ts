@@ -189,6 +189,7 @@ export async function createItemAction(data: ItemPayload) {
     })
     revalidatePath("/")
     revalidatePath("/account")
+    revalidatePath("/account/items")
     return { ok: true, item, id: item.id }
   } catch (error) {
     return {
@@ -206,6 +207,7 @@ export async function updateItemAction(id: string, data: ItemPayload) {
     })
     revalidatePath("/")
     revalidatePath("/account")
+    revalidatePath("/account/items")
     revalidatePath(`/items/${id}`)
     return { ok: true, item }
   } catch (error) {
@@ -223,6 +225,7 @@ export async function deleteItemAction(id: string) {
     })
     revalidatePath("/")
     revalidatePath("/account")
+    revalidatePath("/account/items")
     return { ok: true }
   } catch (error) {
     return {

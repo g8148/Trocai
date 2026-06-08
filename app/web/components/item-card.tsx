@@ -2,6 +2,7 @@ import Link from "next/link"
 import { ArrowRight, MapPin, Star } from "lucide-react"
 
 import type { ItemSummary } from "@/lib/api"
+import { getItemPrimaryImage } from "@/lib/item-visuals"
 import { cn } from "@/lib/utils"
 
 function formatCurrency(value: string | null) {
@@ -56,6 +57,7 @@ export function ItemCard({
   featured?: boolean
 }) {
   const price = formatCurrency(item.estimated_value)
+  const primaryImage = getItemPrimaryImage(item)
 
   if (featured) {
     return (
@@ -63,9 +65,8 @@ export function ItemCard({
         href={href}
         className="group block overflow-hidden rounded-[30px] border border-black/5 bg-white p-3 shadow-[0_18px_50px_rgba(17,24,39,0.08)]"
       >
-        {/* Proporção cinematográfica no desktop */}
         <div className="relative overflow-hidden rounded-[24px] lg:aspect-[3/1]">
-          <ItemThumb src={item.cover_image} alt={item.name} />
+          <ItemThumb src={primaryImage} alt={item.name} />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#10182c]/80 via-[#10182c]/25 to-transparent px-5 py-5 text-white">
             <div className="flex items-center justify-between">
               <div>
@@ -91,9 +92,8 @@ export function ItemCard({
       href={href}
       className="group flex gap-3 rounded-[24px] border border-black/7 bg-white p-3 shadow-[0_14px_32px_rgba(17,24,39,0.06)] transition hover:-translate-y-0.5 lg:flex-col lg:gap-0"
     >
-      {/* Thumbnail — quadrado fixo no mobile, aspect-square fullwidth no desktop */}
       <div className="h-[122px] w-[122px] shrink-0 lg:aspect-square lg:h-auto lg:w-full lg:shrink lg:pb-3">
-        <ItemThumb src={item.cover_image} alt={item.name} compact />
+        <ItemThumb src={primaryImage} alt={item.name} compact />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-between py-1 lg:py-0">
@@ -101,7 +101,6 @@ export function ItemCard({
           <h3 className="line-clamp-1 text-[1.35rem] font-semibold tracking-[-0.04em] text-[#182034]">
             {item.name}
           </h3>
-          {/* Descrição só aparece no mobile — no grid desktop não tem espaço */}
           <p className="line-clamp-2 text-sm leading-5 text-[#5d6678] lg:hidden">
             {item.description}
           </p>
@@ -110,7 +109,7 @@ export function ItemCard({
           <div className="flex items-center justify-between text-sm text-[#5d6678]">
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5" />
-              {item.category_name ?? "Perto de você"}
+              {item.category_name ?? "Perto de voce"}
             </span>
             <span className="inline-flex items-center gap-0.5 text-[#ff8b2c]">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -128,7 +127,7 @@ export function ItemCard({
             </p>
           ) : (
             <p className="text-sm font-medium text-[#2fb1c2]">
-              Disponível para empréstimo
+              Disponivel para emprestimo
             </p>
           )}
         </div>

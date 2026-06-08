@@ -15,7 +15,7 @@ export function DesktopCategoryLinks() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex items-center gap-0.5">
+    <nav className="flex items-center gap-1 rounded-full bg-[#f4f7f8] p-1">
       {LINKS.map(({ href, label, exact }) => {
         const active = exact
           ? pathname === href
@@ -25,10 +25,10 @@ export function DesktopCategoryLinks() {
             key={href}
             href={href}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
+              "rounded-full px-4 py-2 text-sm transition-all",
               active
-                ? "font-semibold text-[#10182c]"
-                : "text-[#5d6678] hover:bg-black/5 hover:text-[#10182c]"
+                ? "bg-white font-semibold text-[#10182c] shadow-[0_8px_20px_rgba(17,24,39,0.05)]"
+                : "text-[#5d6678] hover:bg-white/70 hover:text-[#10182c]"
             )}
           >
             {label}

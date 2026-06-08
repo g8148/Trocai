@@ -10,9 +10,9 @@ export default async function MainLayout({
   const user = await getMe()
 
   return (
-    <div className="flex min-h-svh flex-col bg-white">
+    <div className="relative flex min-h-svh flex-col">
       <AppHeader user={user} />
-      <main className="mx-auto w-full max-w-7xl flex-1 lg:px-6">
+      <main className="mx-auto w-full max-w-[1180px] flex-1 lg:px-6">
         {children}
       </main>
       <Footer />

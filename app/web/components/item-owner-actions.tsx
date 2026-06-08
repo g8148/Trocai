@@ -35,7 +35,7 @@ export function ItemOwnerActions({
         return
       }
 
-      router.push("/account")
+      router.push("/account/items")
       router.refresh()
     })
   }

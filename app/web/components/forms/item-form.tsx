@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState, useTransition } from "react"
-import { ChevronLeft, Link2, Plus, X } from "lucide-react"
+import { ChevronLeft, ImagePlus, Link2, Plus, X } from "lucide-react"
 
 import { createItemAction, updateItemAction } from "@/lib/app-actions"
 import type { CategoryGroup, ItemSummary } from "@/lib/api"
@@ -21,6 +21,78 @@ interface SubcategoryOption {
   name: string
 }
 
+type ItemType = "tool" | "service"
+
+type DemoImageOption = {
+  path: string
+  label: string
+  type: ItemType
+  keywords: string[]
+}
+
+const ITEM_TYPE_OPTIONS: Array<{ value: ItemType; label: string }> = [
+  { value: "tool", label: "Ferramenta" },
+  { value: "service", label: "Servico" },
+]
+
+const CONDITION_OPTIONS = [
+  { value: "new", label: "Novo" },
+  { value: "good", label: "Bom estado" },
+  { value: "used", label: "Usado" },
+  { value: "worn", label: "Desgastado" },
+] as const
+
+const SEGREGATION_OPTIONS = [
+  { value: "hobby", label: "Hobby" },
+  { value: "semi_professional", label: "Semi profissional" },
+  { value: "professional", label: "Profissional" },
+] as const
+
+const DEMO_IMAGE_OPTIONS: DemoImageOption[] = [
+  {
+    path: "/demo-items/furadeira-bosch-usada.png",
+    label: "Furadeira usada",
+    type: "tool",
+    keywords: ["furadeira", "parafusadeira", "bosch"],
+  },
+  {
+    path: "/demo-items/chave-fenda-usada.png",
+    label: "Chave de fenda",
+    type: "tool",
+    keywords: ["chave", "fenda", "philips"],
+  },
+  {
+    path: "/demo-items/martelo-usado.png",
+    label: "Martelo usado",
+    type: "tool",
+    keywords: ["martelo", "mk2"],
+  },
+  {
+    path: "/demo-items/marreta-demolicao-usada.png",
+    label: "Marreta de demolicao",
+    type: "tool",
+    keywords: ["marreta", "demolidor", "martelete", "demolicao"],
+  },
+  {
+    path: "/demo-items/esmerilhadeira-usada.png",
+    label: "Esmerilhadeira",
+    type: "tool",
+    keywords: ["esmerilhadeira", "grinder"],
+  },
+  {
+    path: "/demo-items/escada-extensivel-usada.png",
+    label: "Escada extensivel",
+    type: "tool",
+    keywords: ["escada", "andaime", "altura"],
+  },
+  {
+    path: "/demo-items/pintura-residencial.png",
+    label: "Servico residencial",
+    type: "service",
+    keywords: ["pintura", "servico", "instalacao", "hidraulica", "domestico"],
+  },
+]
+
 function getInitialCategoryId(
   categories: CategoryGroup[],
   subcategoryId: string | null | undefined
@@ -33,6 +105,76 @@ function getInitialCategoryId(
     categories.find((category) =>
       category.subcategories.some((subcategory) => subcategory.id === subcategoryId)
     )?.id ?? ""
+  )
+}
+
+function normalizeEstimatedValueInput(rawValue: string) {
+  const trimmed = rawValue.trim()
+
+  if (!trimmed) {
+    return { display: "", payload: null as string | null, error: null as string | null }
+  }
+
+  let normalized = trimmed.replace(/^R\$\s*/i, "").replace(/\s+/g, "")
+
+  if (normalized.includes(",") && normalized.includes(".")) {
+    normalized = normalized.replace(/\./g, "").replace(",", ".")
+  } else if (normalized.includes(",")) {
+    normalized = normalized.replace(",", ".")
+  } else {
+    const dotParts = normalized.split(".")
+    if (dotParts.length > 2) {
+      const decimalPart = dotParts.pop() ?? ""
+      normalized = `${dotParts.join("")}.${decimalPart}`
+    }
+  }
+
+  normalized = normalized.replace(/[^0-9.]/g, "")
+
+  if (!normalized) {
+    return {
+      display: trimmed,
+      payload: null,
+      error: "Informe um valor estimado valido.",
+    }
+  }
+
+  const numericValue = Number(normalized)
+
+  if (Number.isNaN(numericValue)) {
+    return {
+      display: trimmed,
+      payload: null,
+      error: "Informe um valor estimado valido.",
+    }
+  }
+
+  return {
+    display: numericValue.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+    payload: numericValue.toFixed(2),
+    error: null,
+  }
+}
+
+function buildAbsoluteImageUrl(value: string) {
+  if (/^https?:\/\//i.test(value)) {
+    return value
+  }
+
+  if (typeof window === "undefined") {
+    return value
+  }
+
+  return new URL(value, window.location.origin).toString()
+}
+
+function getSuggestionScore(option: DemoImageOption, haystack: string) {
+  return option.keywords.reduce(
+    (total, keyword) => total + (haystack.includes(keyword) ? 3 : 0),
+    0
   )
 }
 
@@ -51,6 +193,9 @@ export function ItemForm({
     [categories, item?.subcategory]
   )
 
+  const initialType: ItemType = item?.category_type === "service" ? "service" : "tool"
+
+  const [selectedType, setSelectedType] = useState<ItemType>(initialType)
   const [name, setName] = useState(item?.name ?? "")
   const [description, setDescription] = useState(item?.description ?? "")
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId)
@@ -63,12 +208,55 @@ export function ItemForm({
     item?.allow_reservation ?? true
   )
   const [estimatedValue, setEstimatedValue] = useState(
-    item?.estimated_value ?? ""
+    item?.estimated_value
+      ? Number(item.estimated_value).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : ""
   )
   const [imageUrls, setImageUrls] = useState<string[]>(
     item?.images?.map((image) => image.image) ?? [""]
   )
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([])
+
+  const filteredCategories = useMemo(
+    () => categories.filter((category) => category.type === selectedType),
+    [categories, selectedType]
+  )
+
+  const selectedCategory = useMemo(
+    () =>
+      filteredCategories.find((category) => category.id === selectedCategoryId) ?? null,
+    [filteredCategories, selectedCategoryId]
+  )
+
+  const selectedSubcategory = useMemo(
+    () =>
+      subcategories.find((subcategory) => subcategory.id === selectedSubcategoryId) ??
+      null,
+    [subcategories, selectedSubcategoryId]
+  )
+
+  const imageSuggestions = useMemo(() => {
+    const haystack = [
+      name,
+      selectedCategory?.name ?? "",
+      selectedSubcategory?.name ?? "",
+      selectedType,
+    ]
+      .join(" ")
+      .toLowerCase()
+
+    return DEMO_IMAGE_OPTIONS
+      .filter((option) => option.type === selectedType)
+      .map((option) => ({
+        ...option,
+        score: getSuggestionScore(option, haystack),
+      }))
+      .sort((first, second) => second.score - first.score)
+      .slice(0, selectedType === "service" ? 1 : 3)
+  }, [name, selectedCategory?.name, selectedSubcategory?.name, selectedType])
 
   useEffect(() => {
     if (initialCategoryId) {
@@ -83,12 +271,25 @@ export function ItemForm({
   }, [item?.subcategory])
 
   useEffect(() => {
-    const category = categories.find(
+    if (
+      selectedCategoryId &&
+      !filteredCategories.some((category) => category.id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId("")
+      setSelectedSubcategoryId("")
+    }
+  }, [filteredCategories, selectedCategoryId])
+
+  useEffect(() => {
+    const category = filteredCategories.find(
       (currentCategory) => currentCategory.id === selectedCategoryId
     )
 
     if (!category) {
       setSubcategories([])
+      if (selectedSubcategoryId) {
+        setSelectedSubcategoryId("")
+      }
       return
     }
 
@@ -102,7 +303,7 @@ export function ItemForm({
     ) {
       setSelectedSubcategoryId(category.subcategories[0]?.id ?? "")
     }
-  }, [categories, selectedCategoryId, selectedSubcategoryId])
+  }, [filteredCategories, selectedCategoryId, selectedSubcategoryId])
 
   const updateImageUrl = (index: number, value: string) => {
     setImageUrls((current) =>
@@ -121,6 +322,45 @@ export function ItemForm({
       const next = current.filter((_, currentIndex) => currentIndex !== index)
       return next.length > 0 ? next : [""]
     })
+  }
+
+  const applySuggestedImage = (path: string) => {
+    const absoluteUrl = buildAbsoluteImageUrl(path)
+
+    setImageUrls((current) => {
+      const next = [...current]
+      const emptyIndex = next.findIndex((url) => !url.trim())
+
+      if (emptyIndex >= 0) {
+        next[emptyIndex] = absoluteUrl
+      } else {
+        next.unshift(absoluteUrl)
+      }
+
+      return Array.from(new Set(next))
+    })
+  }
+
+  const handleEstimatedValueBlur = () => {
+    const normalized = normalizeEstimatedValueInput(estimatedValue)
+    if (!normalized.error) {
+      setEstimatedValue(normalized.display)
+    }
+  }
+
+  const handleSuccessOpenChange = (open: boolean) => {
+    setShowSuccess(open)
+
+    if (open) {
+      return
+    }
+
+    if (isEditing && item) {
+      router.push(`/items/${item.id}`)
+      return
+    }
+
+    router.push("/account/items")
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -142,7 +382,21 @@ export function ItemForm({
       return
     }
 
-    const cleanedImageUrls = imageUrls.map((url) => url.trim()).filter(Boolean)
+    const normalizedEstimatedValue = normalizeEstimatedValueInput(estimatedValue)
+
+    if (normalizedEstimatedValue.error) {
+      setError(normalizedEstimatedValue.error)
+      return
+    }
+
+    const cleanedImageUrls = Array.from(
+      new Set(
+        imageUrls
+          .map((url) => url.trim())
+          .filter(Boolean)
+          .map((url) => buildAbsoluteImageUrl(url))
+      )
+    )
 
     startTransition(async () => {
       const payload = {
@@ -152,7 +406,7 @@ export function ItemForm({
         condition,
         segregation,
         allow_reservation: allowReservation,
-        estimated_value: estimatedValue.trim() || null,
+        estimated_value: normalizedEstimatedValue.payload,
         image_urls: cleanedImageUrls,
       }
 
@@ -170,20 +424,9 @@ export function ItemForm({
     })
   }
 
-  const handleSuccessClose = () => {
-    setShowSuccess(false)
-
-    if (isEditing && item) {
-      router.push(`/items/${item.id}`)
-      return
-    }
-
-    router.push("/account")
-  }
-
   const pageTitle = isEditing ? "Editar item" : "Novo item"
-  const buttonLabel = isEditing ? "Salvar alteracoes" : "Criar item"
-  const successTitle = isEditing ? "Item atualizado" : "Item criado"
+  const buttonLabel = isEditing ? "Salvar alteracoes" : "Publicar item"
+  const successTitle = isEditing ? "Item atualizado" : "Item publicado"
   const successDescription = isEditing
     ? "Seu item foi atualizado com sucesso."
     : "Seu item ja esta disponivel no catalogo."
@@ -208,12 +451,41 @@ export function ItemForm({
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-[#182034]">
+              Tipo de item *
+            </label>
+            <div className="grid grid-cols-2 gap-2 rounded-[24px] border border-black/8 bg-[#f6f7fa] p-1">
+              {ITEM_TYPE_OPTIONS.map((option) => {
+                const active = selectedType === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedType(option.value)}
+                    className={`rounded-[20px] px-4 py-3 text-sm font-medium transition ${
+                      active
+                        ? "bg-white text-[#182034] shadow-[0_10px_20px_rgba(16,24,44,0.08)]"
+                        : "text-[#778094]"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-[#182034]">
               Nome *
             </label>
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Ex: Furadeira de impacto"
+              placeholder={
+                selectedType === "service"
+                  ? "Ex: Pintura residencial"
+                  : "Ex: Furadeira de impacto"
+              }
               className="h-12 rounded-2xl border-black/10 px-4 text-base"
             />
           </div>
@@ -225,7 +497,7 @@ export function ItemForm({
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Descreva o item, condicao e detalhes de uso."
+              placeholder="Descreva o item, estado, detalhes de uso e combinacoes importantes."
               className="min-h-[120px] w-full rounded-[24px] border border-black/10 px-4 py-3 text-base outline-none"
             />
           </div>
@@ -241,7 +513,7 @@ export function ItemForm({
                 className="h-12 w-full rounded-2xl border border-black/10 px-4 text-base text-[#182034]"
               >
                 <option value="">Selecione...</option>
-                {categories.map((category) => (
+                {filteredCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -278,10 +550,11 @@ export function ItemForm({
                 onChange={(event) => setCondition(event.target.value)}
                 className="h-12 w-full rounded-2xl border border-black/10 px-4 text-base text-[#182034]"
               >
-                <option value="new">Novo</option>
-                <option value="good">Bom estado</option>
-                <option value="used">Usado</option>
-                <option value="worn">Desgastado</option>
+                {CONDITION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -294,9 +567,11 @@ export function ItemForm({
                 onChange={(event) => setSegregation(event.target.value)}
                 className="h-12 w-full rounded-2xl border border-black/10 px-4 text-base text-[#182034]"
               >
-                <option value="hobby">Hobby</option>
-                <option value="semi_professional">Semi profissional</option>
-                <option value="professional">Profissional</option>
+                {SEGREGATION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -308,10 +583,14 @@ export function ItemForm({
             <Input
               value={estimatedValue}
               onChange={(event) => setEstimatedValue(event.target.value)}
+              onBlur={handleEstimatedValueBlur}
               inputMode="decimal"
-              placeholder="Ex: 99.90"
+              placeholder="Ex: 99,00"
               className="h-12 rounded-2xl border-black/10 px-4 text-base"
             />
+            <p className="text-xs text-[#8a92a3]">
+              Voce pode informar com virgula, por exemplo: 89,90.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -328,19 +607,50 @@ export function ItemForm({
             </label>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-[#182034]">
-                Fotos
-              </label>
-              <button
-                type="button"
-                onClick={addImageField}
-                className="inline-flex items-center gap-1 rounded-full border border-black/8 px-3 py-1 text-xs font-medium text-[#182034] transition hover:bg-black/5"
-              >
-                <Plus size={14} />
-                Adicionar
-              </button>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-[#182034]">
+                  Fotos
+                </label>
+                <button
+                  type="button"
+                  onClick={addImageField}
+                  className="inline-flex items-center gap-1 rounded-full border border-black/8 px-3 py-1 text-xs font-medium text-[#182034] transition hover:bg-black/5"
+                >
+                  <Plus size={14} />
+                  Adicionar link
+                </button>
+              </div>
+
+              <div className="rounded-[24px] border border-black/10 bg-[#fafbfc] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#edfafe] text-[#2fb1c2]">
+                    <ImagePlus size={18} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-[#182034]">
+                      Fotos sugeridas
+                    </p>
+                    <p className="text-xs leading-5 text-[#8a92a3]">
+                      Se voce ainda nao tiver um link pronto, pode usar uma foto
+                      sugerida para publicar e trocar depois.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {imageSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.path}
+                          type="button"
+                          onClick={() => applySuggestedImage(suggestion.path)}
+                          className="rounded-full border border-black/8 bg-white px-3 py-1.5 text-xs font-medium text-[#182034] transition hover:bg-black/5"
+                        >
+                          {suggestion.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3 rounded-[24px] border border-black/10 bg-[#fafbfc] p-4">
@@ -372,13 +682,13 @@ export function ItemForm({
 
                   {imageUrl.trim() ? (
                     <img
-                      src={imageUrl}
+                      src={buildAbsoluteImageUrl(imageUrl)}
                       alt={`Preview ${index + 1}`}
                       className="h-28 w-full rounded-2xl object-cover"
                     />
                   ) : (
                     <div className="flex h-28 items-center justify-center rounded-2xl border border-dashed border-black/8 bg-[linear-gradient(145deg,#f4f5f7_0%,#eceeef_38%,#ffffff_100%)] text-xs text-[#8a92a3]">
-                      Cole um link de imagem para visualizar
+                      Cole um link ou use uma sugestao acima
                     </div>
                   )}
                 </div>
@@ -386,7 +696,8 @@ export function ItemForm({
             </div>
 
             <p className="text-xs text-[#8a92a3]">
-              O backend atual salva as imagens a partir de links.
+              O sistema salva imagens por link. Se preferir, publique primeiro com
+              uma sugestao e depois edite.
             </p>
           </div>
 
@@ -408,9 +719,10 @@ export function ItemForm({
 
       <SuccessDialog
         open={showSuccess}
-        onOpenChange={handleSuccessClose}
+        onOpenChange={handleSuccessOpenChange}
         title={successTitle}
         description={successDescription}
+        actionLabel={isEditing ? "Voltar para o item" : "Ver meus itens"}
       />
     </>
   )

@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation"
-import { getCurrentUser } from "@/lib/auth"
 
-import { getItem, getCategories } from "@/lib/api"
+import { getCategories, getItem, getMe } from "@/lib/api"
 import { ItemForm } from "@/components/forms/item-form"
 
 export default async function EditItemPage({
@@ -11,7 +10,7 @@ export default async function EditItemPage({
 }) {
   const { id } = await params
   const item = await getItem(id)
-  const user = await getCurrentUser()
+  const user = await getMe()
 
   if (!item) notFound()
   if (!user) {

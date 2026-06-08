@@ -77,6 +77,7 @@ export async function loginAction(data: {
 }): Promise<{ error?: string }> {
   const login = typeof data.login === "string" ? data.login.trim() : ""
   const password = typeof data.password === "string" ? data.password : ""
+  const isEmailLogin = login.includes("@")
 
   if (!login || !password) {
     return { error: "Informe usuario ou email e senha para entrar." }
@@ -89,8 +90,7 @@ export async function loginAction(data: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: login,
-        username: login,
+        ...(isEmailLogin ? { email: login } : { username: login }),
         password,
       }),
     })

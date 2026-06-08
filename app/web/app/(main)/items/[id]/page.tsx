@@ -2,8 +2,8 @@ import Link from "next/link"
 import { Star } from "lucide-react"
 import { notFound } from "next/navigation"
 
-import { getItem } from "@/lib/api"
-import { getCurrentUser } from "@/lib/auth"
+import { getItem, getMe } from "@/lib/api"
+import { getItemGalleryImages } from "@/lib/item-visuals"
 import { ItemGallery } from "@/components/item-gallery"
 import { StartChatButton } from "@/components/start-chat-button"
 import { ItemOwnerActions } from "@/components/item-owner-actions"
@@ -50,7 +50,7 @@ export default async function ItemDetailPage({
 }) {
   const { id } = await params
   const item = await getItem(id)
-  const user = await getCurrentUser()
+  const user = await getMe()
 
   if (!item) notFound()
 
@@ -64,7 +64,7 @@ export default async function ItemDetailPage({
     item.owner.first_name?.[0] ?? item.owner.username[0]
   ).toUpperCase()
 
-  const images = item.images ?? []
+  const images = getItemGalleryImages(item)
 
   return (
     <div className="pb-28 lg:pb-10">
