@@ -1,8 +1,19 @@
 import Link from "next/link"
-import { Mail, Phone, MapPin, FileText, ChevronRight, LogOut, Ruler } from "lucide-react"
+import {
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  ChevronRight,
+  LogOut,
+  PackagePlus,
+  Ruler,
+  SquarePen,
+} from "lucide-react"
 
-import { getMe } from "@/lib/api"
+import { getItems, getMe } from "@/lib/api"
 import { logoutAction } from "@/lib/auth-actions"
+import { ItemCard } from "@/components/item-card"
 
 const STATUS: Record<string, { label: string; className: string }> = {
   available: { label: "Disponível", className: "bg-emerald-50 text-emerald-700" },
@@ -64,6 +75,7 @@ function ActionLink({
 export default async function AccountPage() {
   const user = await getMe()
   if (!user) return null
+  const ownItems = await getItems(undefined, undefined, "me")
 
   const statusInfo = STATUS[user.status] ?? STATUS.available
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username
@@ -104,6 +116,12 @@ export default async function AccountPage() {
       {/* Ações */}
       <div className="mb-8 flex flex-col gap-2.5">
         <ActionLink
+          href="/items/new"
+          icon={PackagePlus}
+          label="Novo item"
+          description="Publique uma ferramenta ou servico"
+        />
+        <ActionLink
           href="/account/profile"
           icon={FileText}
           label="Editar perfil"
@@ -115,6 +133,44 @@ export default async function AccountPage() {
           label="Distância de busca"
           description={user.search_radius_km ? `${user.search_radius_km} km` : undefined}
         />
+      </div>
+
+      <div className="mb-8 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-[#182034]">Meus itens</h2>
+          <Link
+            href="/items/new"
+            className="rounded-full border border-black/8 px-3 py-1.5 text-xs font-medium text-[#182034] transition hover:bg-black/5"
+          >
+            Novo item
+          </Link>
+        </div>
+
+        {ownItems.length > 0 ? (
+          <div className="space-y-3">
+            {ownItems.map((item) => (
+              <div key={item.id} className="space-y-2">
+                <ItemCard item={item} href={`/items/${item.id}`} />
+                <Link
+                  href={`/items/${item.id}/edit`}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-black/8 px-4 py-2 text-sm font-medium text-[#182034] transition hover:bg-black/5"
+                >
+                  <SquarePen className="h-4 w-4" />
+                  Editar item
+                </Link>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-black/10 bg-[#f7f8fb] px-5 py-8 text-center">
+            <p className="text-base font-medium text-[#182034]">
+              Voce ainda nao publicou nenhum item.
+            </p>
+            <p className="mt-1 text-sm text-[#8a92a3]">
+              Crie seu primeiro anuncio para aparecer no catalogo.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Sair */}

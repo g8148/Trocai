@@ -70,6 +70,7 @@ export interface ItemSummary {
   cover_image: string | null
   images: ItemImage[]
   created_at: string
+  updated_at: string
 }
 
 export interface NotificationEntry {
@@ -138,7 +139,7 @@ export interface ReviewEntry {
 }
 
 type ApiRequestOptions = {
-  method?: "GET" | "POST" | "PATCH"
+  method?: "GET" | "POST" | "PATCH" | "DELETE"
   auth?: boolean
   body?: FormData | Record<string, unknown>
 }
@@ -178,7 +179,7 @@ export async function apiRequest<T>(
     headers,
     cache: "no-store",
     body:
-      method === "GET"
+      method === "GET" || body === undefined
         ? undefined
         : body instanceof FormData
           ? body

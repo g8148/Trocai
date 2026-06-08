@@ -3,8 +3,10 @@ import { Star } from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { getItem } from "@/lib/api"
+import { getCurrentUser } from "@/lib/auth"
 import { ItemGallery } from "@/components/item-gallery"
 import { StartChatButton } from "@/components/start-chat-button"
+import { ItemOwnerActions } from "@/components/item-owner-actions"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -48,8 +50,11 @@ export default async function ItemDetailPage({
 }) {
   const { id } = await params
   const item = await getItem(id)
+  const user = await getCurrentUser()
 
   if (!item) notFound()
+
+  const isOwner = user?.id === item.owner.id
 
   const avail = AVAILABILITY[item.availability] ?? {
     label: item.availability,
@@ -179,13 +184,19 @@ export default async function ItemDetailPage({
 
           {/* Ações — desktop */}
           <div className="hidden flex-col gap-2.5 lg:flex">
-            <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
-            <Link
-              href={`/items/${item.id}/reserve`}
-              className="flex h-14 w-full items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
-            >
-              Solicitar empréstimo
-            </Link>
+            {isOwner ? (
+              <ItemOwnerActions itemId={item.id} isOwner={isOwner} />
+            ) : (
+              <>
+                <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
+                <Link
+                  href={`/items/${item.id}/reserve`}
+                  className="flex h-14 w-full items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
+                >
+                  Solicitar empréstimo
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -193,13 +204,19 @@ export default async function ItemDetailPage({
       {/* Ações — mobile fixo na base */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-black/5 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
         <div className="flex gap-2.5">
-          <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
-          <Link
-            href={`/items/${item.id}/reserve`}
-            className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
-          >
-            Reservar
-          </Link>
+          {isOwner ? (
+            <ItemOwnerActions itemId={item.id} isOwner={isOwner} />
+          ) : (
+            <>
+              <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
+              <Link
+                href={`/items/${item.id}/reserve`}
+                className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
+              >
+                Reservar
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

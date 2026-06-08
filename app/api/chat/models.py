@@ -37,7 +37,7 @@ class Conversation(models.Model):
 
     @property
     def last_message(self):
-        return self.messages.order_by("-created_at").first()
+        return self.messages.filter(is_deleted=False).order_by("-created_at").first()
 
 
 class Message(models.Model):
@@ -56,6 +56,8 @@ class Message(models.Model):
     is_read = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Mensagem"

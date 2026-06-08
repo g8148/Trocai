@@ -14,57 +14,66 @@ from .models import Loan
 from .serializers import LoanSerializer
 
 
-@extend_schema(tags=['Empréstimos'])
+@extend_schema(tags=["Emprestimos"])
 class LoanListCreateView(generics.ListCreateAPIView):
-    """Lista os empréstimos do usuário ou solicita um novo empréstimo."""
+    """Lista os emprestimos do usuario ou solicita um novo emprestimo."""
 
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return Loan.objects.filter(Q(borrower=user) | Q(lender=user))
+        return Loan.objects.filter(
+            Q(borrower=user) | Q(lender=user),
+            is_deleted=False,
+        )
 
     @transaction.atomic
     def perform_create(self, serializer):
-        item = serializer.validated_data['item']
+        item = serializer.validated_data["item"]
+
+        if item.is_deleted or not item.is_active:
+            raise ValidationError("Item indisponivel")
 
         if item.availability != Item.AvailabilityChoices.AVAILABLE:
-            raise ValidationError("Item não disponível")
+            raise ValidationError("Item nao disponivel")
 
         serializer.save(borrower=self.request.user, lender=item.owner)
         item.availability = Item.AvailabilityChoices.RESERVED
         item.save()
 
 
-@extend_schema(tags=['Empréstimos'])
+@extend_schema(tags=["Emprestimos"])
 class LoanDetailView(generics.RetrieveAPIView):
-    """Retorna os detalhes de um empréstimo específico."""
+    """Retorna os detalhes de um emprestimo especifico."""
 
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return Loan.objects.filter(Q(borrower=user) | Q(lender=user))
+        return Loan.objects.filter(
+            Q(borrower=user) | Q(lender=user),
+            is_deleted=False,
+        )
 
 
-@extend_schema(tags=['Empréstimos'])
+@extend_schema(tags=["Emprestimos"])
 class LoanApproveView(APIView):
-    """Aprova uma solicitação de empréstimo (somente o dono do item)."""
+    """Aprova uma solicitacao de emprestimo."""
 
     permission_classes = [permissions.IsAuthenticated]
 
     @transaction.atomic
     def post(self, request, pk):
-        loan = get_object_or_404(Loan, pk=pk)
+        loan = get_object_or_404(Loan, pk=pk, is_deleted=False)
 
         if request.user != loan.lender:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         if loan.status != Loan.StatusChoices.PENDING:
             return Response(
-                {"detail": "Apenas empréstimos pendentes podem ser aprovados."},
+                {"detail": "Apenas emprestimos pendentes podem ser aprovados."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -75,22 +84,25 @@ class LoanApproveView(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=['Empréstimos'])
+@extend_schema(tags=["Emprestimos"])
 class LoanReturnView(APIView):
-    """Registra a devolução de um item emprestado."""
+    """Registra a devolucao de um item emprestado."""
 
     permission_classes = [permissions.IsAuthenticated]
 
     @transaction.atomic
     def post(self, request, pk):
-        loan = get_object_or_404(Loan, pk=pk)
+        loan = get_object_or_404(Loan, pk=pk, is_deleted=False)
 
         if request.user != loan.lender:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        if loan.status not in {Loan.StatusChoices.APPROVED, Loan.StatusChoices.IN_PROGRESS}:
+        if loan.status not in {
+            Loan.StatusChoices.APPROVED,
+            Loan.StatusChoices.IN_PROGRESS,
+        }:
             return Response(
-                {"detail": "Apenas empréstimos aprovados ou em andamento podem ser devolvidos."},
+                {"detail": "Apenas emprestimos aprovados ou em andamento podem ser devolvidos."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 
-import { apiRequest, type AppUser, API_URL } from "./api"
+import { apiRequest, type AppUser, API_URL, type ItemSummary } from "./api"
 import { getAccessToken } from "./auth"
 
 const USER_COOKIE_MAX_AGE = 7 * 24 * 60 * 60
@@ -167,6 +167,68 @@ export async function markNotificationReadAction(id: string) {
     return { ok: true }
   } catch {
     return { ok: false }
+  }
+}
+
+type ItemPayload = {
+  name: string
+  description: string
+  subcategory: string
+  condition: string
+  segregation: string
+  allow_reservation: boolean
+  estimated_value?: string | null
+  image_urls?: string[]
+}
+
+export async function createItemAction(data: ItemPayload) {
+  try {
+    const item = await apiRequest<ItemSummary>("/api/items/", {
+      method: "POST",
+      body: data,
+    })
+    revalidatePath("/")
+    revalidatePath("/account")
+    return { ok: true, item, id: item.id }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Nao foi possivel criar o item.",
+    }
+  }
+}
+
+export async function updateItemAction(id: string, data: ItemPayload) {
+  try {
+    const item = await apiRequest<ItemSummary>(`/api/items/${id}/`, {
+      method: "PATCH",
+      body: data,
+    })
+    revalidatePath("/")
+    revalidatePath("/account")
+    revalidatePath(`/items/${id}`)
+    return { ok: true, item }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Nao foi possivel atualizar o item.",
+    }
+  }
+}
+
+export async function deleteItemAction(id: string) {
+  try {
+    await apiRequest(`/api/items/${id}/`, {
+      method: "DELETE",
+    })
+    revalidatePath("/")
+    revalidatePath("/account")
+    return { ok: true }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Nao foi possivel deletar o item.",
+    }
   }
 }
 
