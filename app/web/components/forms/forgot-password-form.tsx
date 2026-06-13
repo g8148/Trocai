@@ -17,7 +17,7 @@ export function ForgotPasswordForm() {
       <div className="space-y-6">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#182034]">
-            Usuario ou email
+            Usuário ou e-mail
           </label>
           <Input
             value={login}
@@ -29,7 +29,7 @@ export function ForgotPasswordForm() {
 
         <p className="whitespace-pre-line text-[1rem] leading-7 text-[#182034]">
           * Caso seu cadastro seja identificado,
-          {"\n"}voce recebera um link para redefinicao de senha.
+          {"\n"}você receberá um link para redefinição de senha.
         </p>
 
         <Button
@@ -51,7 +51,7 @@ export function ForgotPasswordForm() {
         open={showSuccess}
         onOpenChange={setShowSuccess}
         title="Link enviado"
-        description="Se o cadastro existir, voce recebera as instrucoes para redefinir sua senha."
+        description="Se o cadastro existir, você receberá as instruções para redefinir sua senha."
       />
     </>
   )

@@ -55,9 +55,7 @@ export function FeaturedItemsCarousel({ items }: { items: ItemSummary[] }) {
         return scoreDiff
       }
 
-      return (
-        new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime()
-      )
+      return new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime()
     })
     .slice(0, 5)
 
@@ -78,7 +76,7 @@ export function FeaturedItemsCarousel({ items }: { items: ItemSummary[] }) {
   if (slides.length === 0) {
     return (
       <div className="rounded-[28px] border border-dashed border-black/10 bg-[#f6f5f2] p-8 text-center text-[#5d6678]">
-        Ainda nao existem itens cadastrados para exibir aqui.
+        Ainda não existem itens cadastrados para exibir aqui.
       </div>
     )
   }
@@ -98,7 +96,7 @@ export function FeaturedItemsCarousel({ items }: { items: ItemSummary[] }) {
               </p>
               <div className="space-y-1.5">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#96a0b0]">
-                  {current.category_name ?? "Catalogo"}
+                  {current.category_name ?? "Catálogo"}
                 </p>
                 <h1 className="max-w-[22ch] text-[1.5rem] font-semibold leading-tight tracking-[-0.05em] text-[#182034] lg:text-[1.85rem]">
                   {current.name}
@@ -126,7 +124,7 @@ export function FeaturedItemsCarousel({ items }: { items: ItemSummary[] }) {
                     setIndex((currentIndex) => (currentIndex + 1) % slides.length)
                   }
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-black/8 bg-white text-[#5d6678] transition hover:text-[#182034]"
-                  aria-label="Proximo slide"
+                  aria-label="Próximo slide"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -174,7 +172,9 @@ export function FeaturedItemsCarousel({ items }: { items: ItemSummary[] }) {
                     />
                   ))}
                 </div>
-              ) : <div />}
+              ) : (
+                <div />
+              )}
             </div>
           </div>
         </div>

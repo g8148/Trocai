@@ -17,7 +17,9 @@ export default async function NotificationsPage() {
   return (
     <div className="pb-8">
       <div className="px-4 pb-3 pt-5">
-        <h1 className="text-xl font-semibold tracking-tight text-[#182034]">Notificações</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-[#182034]">
+          Notificações
+        </h1>
       </div>
 
       {notifications.length === 0 ? (

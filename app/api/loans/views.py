@@ -14,9 +14,9 @@ from .models import Loan
 from .serializers import LoanSerializer
 
 
-@extend_schema(tags=["Emprestimos"])
+@extend_schema(tags=["Empréstimos"])
 class LoanListCreateView(generics.ListCreateAPIView):
-    """Lista os emprestimos do usuario ou solicita um novo emprestimo."""
+    """Lista os empréstimos do usuário ou solicita um novo empréstimo."""
 
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -33,19 +33,19 @@ class LoanListCreateView(generics.ListCreateAPIView):
         item = serializer.validated_data["item"]
 
         if item.is_deleted or not item.is_active:
-            raise ValidationError("Item indisponivel")
+            raise ValidationError("Item indisponível")
 
         if item.availability != Item.AvailabilityChoices.AVAILABLE:
-            raise ValidationError("Item nao disponivel")
+            raise ValidationError("Item não disponível")
 
         serializer.save(borrower=self.request.user, lender=item.owner)
         item.availability = Item.AvailabilityChoices.RESERVED
         item.save()
 
 
-@extend_schema(tags=["Emprestimos"])
+@extend_schema(tags=["Empréstimos"])
 class LoanDetailView(generics.RetrieveAPIView):
-    """Retorna os detalhes de um emprestimo especifico."""
+    """Retorna os detalhes de um empréstimo específico."""
 
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -58,9 +58,9 @@ class LoanDetailView(generics.RetrieveAPIView):
         )
 
 
-@extend_schema(tags=["Emprestimos"])
+@extend_schema(tags=["Empréstimos"])
 class LoanApproveView(APIView):
-    """Aprova uma solicitacao de emprestimo."""
+    """Aprova uma solicitação de empréstimo."""
 
     permission_classes = [permissions.IsAuthenticated]
 
@@ -73,7 +73,7 @@ class LoanApproveView(APIView):
 
         if loan.status != Loan.StatusChoices.PENDING:
             return Response(
-                {"detail": "Apenas emprestimos pendentes podem ser aprovados."},
+                {"detail": "Apenas empréstimos pendentes podem ser aprovados."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -84,9 +84,9 @@ class LoanApproveView(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Emprestimos"])
+@extend_schema(tags=["Empréstimos"])
 class LoanReturnView(APIView):
-    """Registra a devolucao de um item emprestado."""
+    """Registra a devolução de um item emprestado."""
 
     permission_classes = [permissions.IsAuthenticated]
 
@@ -102,7 +102,7 @@ class LoanReturnView(APIView):
             Loan.StatusChoices.IN_PROGRESS,
         }:
             return Response(
-                {"detail": "Apenas emprestimos aprovados ou em andamento podem ser devolvidos."},
+                {"detail": "Apenas empréstimos aprovados ou em andamento podem ser devolvidos."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

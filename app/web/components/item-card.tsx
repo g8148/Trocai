@@ -109,7 +109,7 @@ export function ItemCard({
           <div className="flex items-center justify-between text-sm text-[#5d6678]">
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5" />
-              {item.category_name ?? "Perto de voce"}
+              {item.category_name ?? "Perto de você"}
             </span>
             <span className="inline-flex items-center gap-0.5 text-[#ff8b2c]">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -127,7 +127,7 @@ export function ItemCard({
             </p>
           ) : (
             <p className="text-sm font-medium text-[#2fb1c2]">
-              Disponivel para emprestimo
+              Disponível para empréstimo
             </p>
           )}
         </div>

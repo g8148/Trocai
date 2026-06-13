@@ -147,20 +147,20 @@ type ApiRequestOptions = {
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  non_field_errors: "Formulario",
+  non_field_errors: "Formulário",
   name: "Nome",
-  description: "Descricao",
+  description: "Descrição",
   subcategory: "Subcategoria",
-  condition: "Condicao",
-  segregation: "Segregacao",
+  condition: "Condição",
+  segregation: "Segregação",
   estimated_value: "Valor estimado",
   allow_reservation: "Reservas",
   image_urls: "Fotos",
-  email: "Email",
-  username: "Usuario",
+  email: "E-mail",
+  username: "Usuário",
   password: "Senha",
   password1: "Senha",
-  password2: "Confirmacao de senha",
+  password2: "Confirmação de senha",
 }
 
 function formatFieldLabel(key: string) {
@@ -195,7 +195,7 @@ function collectErrorMessages(detail: unknown, path?: string): string[] {
 
 function normalizeErrorMessage(detail: unknown) {
   const [firstMessage] = collectErrorMessages(detail)
-  return firstMessage ?? "Nao foi possivel concluir a requisicao."
+  return firstMessage ?? "Não foi possível concluir a requisição."
 }
 
 export async function apiRequest<T>(

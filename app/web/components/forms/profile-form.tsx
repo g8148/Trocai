@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Lock, CheckCircle, XCircle } from "lucide-react"
+import { CheckCircle, Lock, XCircle } from "lucide-react"
 
 import { updateProfileAction } from "@/lib/app-actions"
 import type { AppUser } from "@/lib/api"
@@ -30,7 +30,7 @@ function Field({
 }: {
   label: string
   value: string
-  onChange?: (v: string) => void
+  onChange?: (value: string) => void
   type?: string
   disabled?: boolean
   hint?: string
@@ -45,21 +45,20 @@ function Field({
         <input
           type={type}
           value={value}
-          onChange={(e) => onChange?.(e.target.value)}
+          onChange={(event) => onChange?.(event.target.value)}
           disabled={disabled}
           placeholder={placeholder}
-          className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none transition
-            ${
-              disabled
-                ? "cursor-not-allowed border-black/5 bg-[#f7f8fb] text-[#8a92a3]"
-                : "border-black/10 bg-white text-[#182034] focus:border-[#2fb1c2] focus:ring-2 focus:ring-[#2fb1c2]/10"
-            }`}
+          className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none transition ${
+            disabled
+              ? "cursor-not-allowed border-black/5 bg-[#f7f8fb] text-[#8a92a3]"
+              : "border-black/10 bg-white text-[#182034] focus:border-[#2fb1c2] focus:ring-2 focus:ring-[#2fb1c2]/10"
+          }`}
         />
-        {disabled && (
+        {disabled ? (
           <Lock className="absolute right-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#c8ccd4]" />
-        )}
+        ) : null}
       </div>
-      {hint && <p className="mt-1.5 text-xs text-[#8a92a3]">{hint}</p>}
+      {hint ? <p className="mt-1.5 text-xs text-[#8a92a3]">{hint}</p> : null}
     </div>
   )
 }
@@ -81,13 +80,13 @@ export function ProfileForm({ user }: { user: AppUser }) {
   })
 
   function set(key: keyof typeof values) {
-    return (v: string) => setValues((prev) => ({ ...prev, [key]: v }))
+    return (value: string) => setValues((prev) => ({ ...prev, [key]: value }))
   }
 
-  function splitName(full: string) {
-    const parts = full.trim().split(/\s+/).filter(Boolean)
+  function splitName(fullName: string) {
+    const parts = fullName.trim().split(/\s+/).filter(Boolean)
     return {
-      first_name: parts[0] ?? "Usuario",
+      first_name: parts[0] ?? "Usuário",
       last_name: parts.slice(1).join(" ") || "Trocai",
     }
   }
@@ -107,11 +106,15 @@ export function ProfileForm({ user }: { user: AppUser }) {
         city: values.city,
         state: values.state,
       })
+
       setFeedback({
         ok: result.ok,
-        message: result.ok ? "Dados salvos com sucesso." : (result.error ?? "Erro ao salvar."),
+        message: result.ok ? "Dados salvos com sucesso." : result.error ?? "Erro ao salvar.",
       })
-      if (result.ok) setTimeout(() => setFeedback(null), 3500)
+
+      if (result.ok) {
+        setTimeout(() => setFeedback(null), 3500)
+      }
     })
   }
 
@@ -128,12 +131,23 @@ export function ProfileForm({ user }: { user: AppUser }) {
       </Section>
 
       <Section title="Contato">
-        <Field label="Email" type="email" value={values.email} onChange={set("email")} />
-        <Field label="Telefone" type="tel" value={values.phone} onChange={set("phone")} placeholder="(11) 99999-9999" />
+        <Field label="E-mail" type="email" value={values.email} onChange={set("email")} />
+        <Field
+          label="Telefone"
+          type="tel"
+          value={values.phone}
+          onChange={set("phone")}
+          placeholder="(11) 99999-9999"
+        />
       </Section>
 
       <Section title="Endereço">
-        <Field label="CEP" value={values.zip_code} onChange={set("zip_code")} placeholder="00000-000" />
+        <Field
+          label="CEP"
+          value={values.zip_code}
+          onChange={set("zip_code")}
+          placeholder="00000-000"
+        />
         <Field label="Rua" value={values.street} onChange={set("street")} />
         <Field label="Bairro" value={values.neighborhood} onChange={set("neighborhood")} />
         <div className="grid grid-cols-2 gap-3">
@@ -151,13 +165,10 @@ export function ProfileForm({ user }: { user: AppUser }) {
         />
       </Section>
 
-      {/* Feedback */}
-      {feedback && (
+      {feedback ? (
         <div
           className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium ${
-            feedback.ok
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-600"
+            feedback.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
           }`}
         >
           {feedback.ok ? (
@@ -167,9 +178,8 @@ export function ProfileForm({ user }: { user: AppUser }) {
           )}
           {feedback.message}
         </div>
-      )}
+      ) : null}
 
-      {/* Botão — fixo no mobile, inline no desktop */}
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-black/5 bg-white/95 px-4 py-3 backdrop-blur-xl lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
         <button
           type="button"

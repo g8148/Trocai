@@ -20,7 +20,7 @@ export default async function HomePage() {
                 Descobertas
               </p>
               <h2 className="mt-1 text-[1.6rem] font-semibold tracking-[-0.05em] text-[#182034]">
-                Produtos para voce explorar
+                Produtos para você explorar
               </h2>
             </div>
             <Link
@@ -39,7 +39,7 @@ export default async function HomePage() {
             </div>
           ) : items.length > 0 ? (
             <div className="rounded-[26px] border border-dashed border-black/10 bg-[#efeeec] p-6 text-center text-[#5d6678]">
-              Adicione mais itens no catalogo para enriquecer a busca.
+              Adicione mais itens no catálogo para enriquecer a busca.
             </div>
           ) : null}
         </div>

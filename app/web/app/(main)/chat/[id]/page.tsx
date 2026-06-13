@@ -1,7 +1,14 @@
 import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
 
 import { getConversation, getMessages } from "@/lib/api"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 const MOCK_THREADS: Record<
   string,
@@ -11,14 +18,30 @@ const MOCK_THREADS: Record<
   }
 > = {
   "mock-joao": {
-    title: "Joao",
+    title: "João",
     messages: [
-      { sender: "them", content: "Oi! Vi que voce demonstrou interesse em pegar minha furadeira emprestada. Posso te ajudar com alguma duvida?" },
-      { sender: "me", content: "Oi, Joao! Tudo bem? Queria saber se essa furadeira e boa pra furar parede de concreto." },
-      { sender: "them", content: "Tudo bem sim! Ela e uma furadeira de impacto de 700w, da Bosch. Da conta do concreto, sim - so precisa usar uma broca de video boa." },
-      { sender: "me", content: "Perfeito. E essas brocas vem junto?" },
-      { sender: "them", content: "Sim, eu posso te emprestar um jogo de brocas basicas tambem, se quiser." },
-      { sender: "me", content: "Ah, otimo! Esclareceu minhas duvidas." },
+      {
+        sender: "them",
+        content:
+          "Oi! Vi que você demonstrou interesse em pegar minha furadeira emprestada. Posso te ajudar com alguma dúvida?",
+      },
+      {
+        sender: "me",
+        content:
+          "Oi, João! Tudo bem? Queria saber se essa furadeira é boa para furar parede de concreto.",
+      },
+      {
+        sender: "them",
+        content:
+          "Tudo bem sim! Ela é uma furadeira de impacto de 700w, da Bosch. Dá conta do concreto, sim, só precisa usar uma broca de vídeo boa.",
+      },
+      { sender: "me", content: "Perfeito. E essas brocas vêm junto?" },
+      {
+        sender: "them",
+        content:
+          "Sim, eu posso te emprestar um jogo de brocas básicas também, se quiser.",
+      },
+      { sender: "me", content: "Ah, ótimo! Esclareceu minhas dúvidas." },
     ],
   },
 }
@@ -34,7 +57,7 @@ export default async function ChatThreadPage({
   const fallback = MOCK_THREADS[id]
 
   const title =
-    conversation?.participants.find((p) => p.first_name)?.first_name ||
+    conversation?.participants.find((participant) => participant.first_name)?.first_name ||
     fallback?.title ||
     "Conversa"
 
@@ -47,14 +70,20 @@ export default async function ChatThreadPage({
 
   return (
     <div className="pb-8">
-      <div className="flex items-center gap-2 px-4 pb-3 pt-4">
-        <Link
-          href="/chat"
-          className="flex h-8 w-8 items-center justify-center rounded-full text-[#5d6678] transition hover:bg-black/5"
-        >
-          <ChevronLeft size={18} />
-          <span className="sr-only">Voltar</span>
-        </Link>
+      <div className="space-y-3 px-4 pb-3 pt-4">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/chat">Conversas</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <p className="text-base font-semibold text-[#182034]">{title}</p>
       </div>
 

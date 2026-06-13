@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button"
 import { SuccessDialog } from "@/components/success-dialog"
 
 const REASON_OPTIONS = [
-  "Produto nao corresponde a descricao",
+  "Produto não corresponde à descrição",
   "Comportamento ofensivo ou abusivo",
   "Tentativa de golpe ou fraude",
-  "Conteudo inapropriado",
+  "Conteúdo inapropriado",
   "Outro motivo",
 ]
 
@@ -31,16 +31,16 @@ export function ReportForm() {
   return (
     <>
       <div className="space-y-5 px-5 pb-8 pt-6">
-        <p className="text-sm text-[#5d6678]">* Campos obrigatorios</p>
+        <p className="text-sm text-[#5d6678]">* Campos obrigatórios</p>
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#182034]">
-            O que voce deseja denunciar? *
+            O que você deseja denunciar? *
           </label>
           <div className="space-y-2 text-[1.2rem] text-[#182034]">
             {[
-              ["usuario", "Usuario"],
-              ["item", "Produto ou Servico"],
-              ["emprestimo", "Conversa / Comportamento"],
+              ["usuario", "Usuário"],
+              ["item", "Produto ou serviço"],
+              ["emprestimo", "Conversa / comportamento"],
             ].map(([value, label]) => (
               <label key={value} className="flex items-center gap-3">
                 <input
@@ -71,7 +71,7 @@ export function ReportForm() {
           </div>
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#182034]">Descricao *</label>
+          <label className="block text-sm font-medium text-[#182034]">Descrição *</label>
           <textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
@@ -79,11 +79,11 @@ export function ReportForm() {
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#182034]">Anexar Imagens</label>
+          <label className="block text-sm font-medium text-[#182034]">Anexar imagens</label>
           <div className="h-[140px] rounded-[24px] bg-[linear-gradient(145deg,#f4f5f7_0%,#eceeef_38%,#ffffff_100%)]" />
         </div>
         <p className="text-sm text-[#5d6678]">
-          Para registrar no backend, abra esta tela a partir do usuario, item ou emprestimo que deseja denunciar.
+          Para registrar no backend, abra esta tela a partir do usuário, item ou empréstimo que deseja denunciar.
         </p>
         {error ? <p className="text-sm text-red-500">{error}</p> : null}
         <Button
@@ -91,7 +91,7 @@ export function ReportForm() {
           onClick={() =>
             startTransition(async () => {
               if (!description) {
-                setError("Descreva o motivo da denuncia.")
+                setError("Descreva o motivo da denúncia.")
                 return
               }
 
@@ -103,7 +103,7 @@ export function ReportForm() {
                     : { target_loan }
 
               if (!Object.values(targetPayload)[0]) {
-                setError("Selecione um contexto valido para registrar a denuncia.")
+                setError("Selecione um contexto válido para registrar a denúncia.")
                 return
               }
 
@@ -115,7 +115,7 @@ export function ReportForm() {
               })
 
               if (!result.ok) {
-                setError(result.error ?? "Nao foi possivel enviar a denuncia.")
+                setError(result.error ?? "Não foi possível enviar a denúncia.")
                 return
               }
 
@@ -132,8 +132,8 @@ export function ReportForm() {
       <SuccessDialog
         open={showSuccess}
         onOpenChange={setShowSuccess}
-        title="Sua denuncia foi enviada com sucesso!"
-        description="Nossa equipe ira analisar o caso e tomara as medidas necessarias."
+        title="Sua denúncia foi enviada com sucesso!"
+        description="Nossa equipe irá analisar o caso e tomará as medidas necessárias."
       />
     </>
   )

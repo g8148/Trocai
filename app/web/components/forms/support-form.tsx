@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { SuccessDialog } from "@/components/success-dialog"
 
 const SUPPORT_OPTIONS = [
-  "Solicitar intermediacao de emprestimo",
-  "Solicitar intermediacao de devolucao",
+  "Solicitar intermediação de empréstimo",
+  "Solicitar intermediação de devolução",
   "Outro problema",
 ]
 
@@ -29,7 +29,7 @@ export function SupportForm() {
   return (
     <>
       <div className="space-y-5 px-5 pb-8 pt-6">
-        <p className="text-sm text-[#5d6678]">* Campos obrigatorios</p>
+        <p className="text-sm text-[#5d6678]">* Campos obrigatórios</p>
         <div className="space-y-3">
           <label className="block text-sm font-medium text-[#182034]">
             Como podemos te ajudar? *
@@ -50,7 +50,7 @@ export function SupportForm() {
         </div>
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#182034]">
-            Descreva a situacao *
+            Descreva a situação *
           </label>
           <textarea
             value={description}
@@ -59,7 +59,7 @@ export function SupportForm() {
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#182034]">Anexar Imagens</label>
+          <label className="block text-sm font-medium text-[#182034]">Anexar imagens</label>
           <div className="h-[190px] rounded-[24px] bg-[linear-gradient(145deg,#f4f5f7_0%,#eceeef_38%,#ffffff_100%)]" />
         </div>
         <Button
@@ -80,8 +80,8 @@ export function SupportForm() {
       <SuccessDialog
         open={showSuccess}
         onOpenChange={setShowSuccess}
-        title="Sua solicitacao foi enviada!"
-        description="Nosso time de suporte entrara em contato em breve para ajudar a resolver a situacao."
+        title="Sua solicitação foi enviada!"
+        description="Nosso time de suporte entrará em contato em breve para ajudar a resolver a situação."
       />
     </>
   )
