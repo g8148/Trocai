@@ -5,7 +5,6 @@ import {
   LogOut,
   Mail,
   MapPin,
-  PackagePlus,
   Phone,
   Ruler,
 } from "lucide-react"
@@ -126,7 +125,7 @@ export default async function AccountPage() {
           categories={categories}
           label="Adicionar item"
           description="Publique uma ferramenta ou serviço"
-          icon={PackagePlus}
+          icon="package-plus"
           appearance="action-card"
         />
         <ActionLink

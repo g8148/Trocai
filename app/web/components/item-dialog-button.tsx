@@ -1,18 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import { PackagePlus } from "lucide-react"
 
 import type { CategoryGroup, ItemSummary } from "@/lib/api"
-import { ItemFormDialog } from "@/components/item-form-dialog"
+import { ItemFormDialogShadcn } from "@/components/item-form-dialog-shadcn"
 
 type ItemDialogButtonAppearance = "action-card" | "pill" | "primary"
+type ItemDialogButtonIcon = "package-plus"
 
 interface ItemDialogButtonProps {
   categories: CategoryGroup[]
   item?: ItemSummary
   label: string
   description?: string
-  icon?: React.ElementType
+  icon?: ItemDialogButtonIcon
   appearance?: ItemDialogButtonAppearance
   className?: string
 }
@@ -26,16 +28,21 @@ const APPEARANCE_CLASSNAMES: Record<ItemDialogButtonAppearance, string> = {
     "inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90",
 }
 
+const ICONS: Record<ItemDialogButtonIcon, typeof PackagePlus> = {
+  "package-plus": PackagePlus,
+}
+
 export function ItemDialogButton({
   categories,
   item,
   label,
   description,
-  icon: Icon,
+  icon,
   appearance = "pill",
   className = "",
 }: ItemDialogButtonProps) {
   const [open, setOpen] = useState(false)
+  const ButtonIcon = icon ? ICONS[icon] : null
 
   return (
     <>
@@ -44,9 +51,9 @@ export function ItemDialogButton({
         onClick={() => setOpen(true)}
         className={`${APPEARANCE_CLASSNAMES[appearance]} ${className}`.trim()}
       >
-        {Icon ? (
+        {ButtonIcon ? (
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-            <Icon className="h-4 w-4 text-muted-foreground" />
+            <ButtonIcon className="h-4 w-4 text-muted-foreground" />
           </div>
         ) : null}
         <div className="min-w-0 flex-1">
@@ -57,7 +64,7 @@ export function ItemDialogButton({
         </div>
       </button>
 
-      <ItemFormDialog
+      <ItemFormDialogShadcn
         categories={categories}
         item={item}
         open={open}

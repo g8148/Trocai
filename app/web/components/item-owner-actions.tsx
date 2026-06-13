@@ -6,7 +6,7 @@ import { PencilLine, Trash2 } from "lucide-react"
 
 import { deleteItemAction } from "@/lib/app-actions"
 import type { CategoryGroup, ItemSummary } from "@/lib/api"
-import { ItemFormDialog } from "@/components/item-form-dialog"
+import { ItemFormDialogShadcn } from "@/components/item-form-dialog-shadcn"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,7 +83,7 @@ export function ItemOwnerActions({
         </Button>
       </div>
 
-      <ItemFormDialog
+      <ItemFormDialogShadcn
         categories={categories}
         item={item}
         open={editOpen}

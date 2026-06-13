@@ -6,7 +6,7 @@ import { MoreVertical, SquarePen, Trash2 } from "lucide-react"
 
 import { deleteItemAction, updateItemReservationAction } from "@/lib/app-actions"
 import type { CategoryGroup, ItemSummary } from "@/lib/api"
-import { ItemFormDialog } from "@/components/item-form-dialog"
+import { ItemFormDialogShadcn } from "@/components/item-form-dialog-shadcn"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -129,7 +129,7 @@ export function AccountItemControls({
         </DropdownMenu>
       </div>
 
-      <ItemFormDialog
+      <ItemFormDialogShadcn
         categories={categories}
         item={item}
         open={editOpen}

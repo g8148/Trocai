@@ -1,5 +1,3 @@
-import { PackagePlus } from "lucide-react"
-
 import type { CategoryGroup, ItemSummary } from "@/lib/api"
 import { AccountItemControls } from "@/components/account-item-controls"
 import { ItemDialogButton } from "@/components/item-dialog-button"
@@ -28,7 +26,7 @@ export function AccountItemsSection({
         <ItemDialogButton
           categories={categories}
           label="Adicionar item"
-          icon={PackagePlus}
+          icon="package-plus"
           appearance="pill"
         />
       </div>
