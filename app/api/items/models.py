@@ -1,6 +1,7 @@
 import uuid
 from django.conf import settings
 from django.db import models
+from django.db.models import Avg
 
 
 class Category(models.Model):
@@ -128,6 +129,15 @@ class Item(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.owner.username}"
+    
+    @property
+    def average_rating(self):
+        from reviews.models import Review 
+        return Review.objects.filter(
+        loan__item=self
+    ).aggregate(
+        media=Avg("item_rating")
+    )["media"] or 0
 
 
 class ItemImage(models.Model):
