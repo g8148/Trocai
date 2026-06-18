@@ -100,3 +100,82 @@ class LoanReturnView(APIView):
         loan.item.save()
         loan.save()
         return Response(status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Empréstimos'])
+class LoanRejectView(APIView):
+    """Rejeita uma solicitação de empréstimo (somente o dono do item)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, pk):
+        loan = get_object_or_404(Loan, pk=pk)
+
+        if request.user != loan.lender:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if loan.status != Loan.StatusChoices.PENDING:
+            return Response(
+                {"detail": "Apenas empréstimos pendentes podem ser rejeitados."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        loan.status = Loan.StatusChoices.REJECTED
+        loan.item.availability = Item.AvailabilityChoices.AVAILABLE
+        loan.item.save()
+        loan.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Empréstimos'])
+class LoanCancelView(APIView):
+    """Cancela um empréstimo antes da retirada (somente o solicitante)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, pk):
+        loan = get_object_or_404(Loan, pk=pk)
+
+        if request.user != loan.borrower:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if loan.status not in {
+            Loan.StatusChoices.PENDING,
+            Loan.StatusChoices.APPROVED,
+        }:
+            return Response(
+                {"detail": "Apenas empréstimos pendentes ou aprovados podem ser cancelados."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        loan.status = Loan.StatusChoices.CANCELLED
+        loan.item.availability = Item.AvailabilityChoices.AVAILABLE
+        loan.item.save()
+        loan.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Empréstimos'])
+class LoanPickupView(APIView):
+    """Confirma a retirada do item pelo solicitante (somente o solicitante)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, pk):
+        loan = get_object_or_404(Loan, pk=pk)
+
+        if request.user != loan.borrower:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if loan.status != Loan.StatusChoices.APPROVED:
+            return Response(
+                {"detail": "Apenas empréstimos aprovados podem ter a retirada confirmada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        loan.status = Loan.StatusChoices.IN_PROGRESS
+        loan.save()
+        return Response(status=status.HTTP_200_OK)

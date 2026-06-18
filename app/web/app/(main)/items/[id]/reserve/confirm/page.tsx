@@ -11,17 +11,23 @@ export default async function ConfirmReservationPage({
   searchParams: Promise<{
     pickupDate?: string
     pickupTime?: string
-    period?: string
-    displayDate?: string
+    returnDate?: string
   }>
 }) {
   const { id } = await params
   const {
-    pickupDate = "2026-06-17",
-    pickupTime = "09:30",
-    period = "AM",
-    displayDate = "17 de junho de 2026",
+    pickupDate = "",
+    pickupTime = "09:00",
+    returnDate = "",
   } = await searchParams
+
+  const displayDate = pickupDate
+    ? new Intl.DateTimeFormat("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(`${pickupDate}T12:00:00`))
+    : ""
 
   return (
     <div className="pb-8">
@@ -33,13 +39,13 @@ export default async function ConfirmReservationPage({
           <ChevronLeft size={18} />
           <span className="sr-only">Voltar</span>
         </Link>
-        <p className="text-base font-semibold text-[#182034]">Confirmar agendamento</p>
+        <p className="text-base font-semibold text-[#182034]">Confirmar solicitação</p>
       </div>
       <ConfirmReservation
         itemId={id}
         pickupDate={pickupDate}
         pickupTime={pickupTime}
-        period={period}
+        returnDate={returnDate}
         displayDate={displayDate}
       />
     </div>

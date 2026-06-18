@@ -47,6 +47,9 @@ export function DesktopUserMenu({ user }: { user: AppUser | null }) {
         <DropdownMenuItem asChild>
           <Link href="/account/items">Meus itens</Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/loans">Meus empréstimos</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => logoutAction()}
