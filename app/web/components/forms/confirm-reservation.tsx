@@ -2,83 +2,109 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
+import { CalendarDays, RotateCcw } from "lucide-react"
 
 import { createLoanAction } from "@/lib/app-actions"
-import { Button } from "@/components/ui/button"
 
 export function ConfirmReservation({
   itemId,
   pickupDate,
   pickupTime,
-  period,
+  returnDate,
   displayDate,
 }: {
   itemId: string
   pickupDate: string
   pickupTime: string
-  period: string
+  returnDate: string
   displayDate: string
 }) {
   const router = useRouter()
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  function toDateTimeString() {
-    const [hourString, minute] = pickupTime.split(":")
-    const hour = Number(hourString)
-    const convertedHour =
-      period === "PM" && hour < 12 ? hour + 12 : period === "AM" && hour === 12 ? 0 : hour
+  function pickupDateTime() {
+    return new Date(`${pickupDate}T${pickupTime}:00`).toISOString()
+  }
 
-    return `${pickupDate}T${String(convertedHour).padStart(2, "0")}:${minute}:00`
+  function returnDateTime() {
+    // Devolução no fim do dia escolhido.
+    return new Date(`${returnDate}T18:00:00`).toISOString()
   }
 
   return (
-    <div className="flex min-h-[calc(100svh-4rem)] flex-col justify-between px-5 pb-8 pt-12">
-      <div className="space-y-10">
-        <div className="space-y-8 text-[#182034]">
-          <div className="flex items-center gap-4 text-[1.7rem] tracking-[-0.04em]">
-            <span>📅</span>
-            <span>{displayDate}</span>
-          </div>
-          <div className="flex items-center gap-4 text-[1.7rem] tracking-[-0.04em]">
-            <span>⏱</span>
-            <span>
-              {pickupTime}
-              {period}
+    <div className="px-4 pt-2 lg:px-0">
+      <div className="mx-auto w-full max-w-md rounded-2xl border border-black/7 bg-white p-6 shadow-[0_14px_32px_rgba(17,24,39,0.06)]">
+        <h2 className="text-lg font-semibold tracking-tight text-[#111]">
+          Confirme sua solicitação
+        </h2>
+        <p className="mt-1 mb-6 text-sm text-[#999]">
+          Revise os detalhes antes de enviar ao dono do item.
+        </p>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 rounded-xl border border-black/6 bg-[#fafafa] px-4 py-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f7f9]">
+              <CalendarDays className="h-4 w-4 text-[#2fb1c2]" />
             </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium tracking-widest text-[#666] uppercase">
+                Retirada
+              </p>
+              <p className="truncate text-sm text-[#182034]">
+                {displayDate} às {pickupTime}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 rounded-xl border border-black/6 bg-[#fafafa] px-4 py-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f7f9]">
+              <RotateCcw className="h-4 w-4 text-[#2fb1c2]" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium tracking-widest text-[#666] uppercase">
+                Devolução prevista
+              </p>
+              <p className="truncate text-sm text-[#182034]">{returnDate}</p>
+            </div>
           </div>
         </div>
 
-        <p className="text-center text-[1.25rem] leading-[1.15] tracking-[-0.04em] text-[#182034]">
-          * A reserva está sujeita a aprovações e ações de outros usuários, incluindo, mas não se limitando, a devoluções.
+        <p className="mt-4 text-xs leading-relaxed text-[#999]">
+          A solicitação está sujeita à aprovação do dono do item.
         </p>
 
-        {message ? <p className="text-center text-sm text-red-500">{message}</p> : null}
-      </div>
+        {message && (
+          <p className="mt-4 rounded-md border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">
+            {message}
+          </p>
+        )}
 
-      <Button
-        type="button"
-        onClick={() =>
-          startTransition(async () => {
-            const result = await createLoanAction({
-              item: itemId,
-              pickup_date: toDateTimeString(),
-              borrower_notes: "Reserva enviada pelo app mobile-first.",
+        <button
+          type="button"
+          onClick={() =>
+            startTransition(async () => {
+              const result = await createLoanAction({
+                item: itemId,
+                pickup_date: pickupDateTime(),
+                expected_return_date: returnDateTime(),
+                borrower_notes: "Solicitação enviada pelo app.",
+              })
+
+              if (!result.ok) {
+                setMessage(result.error ?? "Não foi possível finalizar.")
+                return
+              }
+
+              router.push("/loans")
             })
-
-            if (!result.ok) {
-              setMessage(result.error ?? "Não foi possível finalizar.")
-              return
-            }
-
-            router.push("/account")
-          })
-        }
-        disabled={isPending}
-        className="h-14 w-full rounded-2xl bg-[#10182c] text-base font-semibold"
-      >
-        {isPending ? "Finalizando..." : "Finalizar"}
-      </Button>
+          }
+          disabled={isPending}
+          className="mt-6 h-11 w-full rounded-lg bg-[#2fb1c2] text-sm font-medium text-white transition-colors hover:bg-[#26a0b0] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {isPending ? "Enviando..." : "Solicitar empréstimo"}
+        </button>
+      </div>
     </div>
   )
 }

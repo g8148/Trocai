@@ -242,7 +242,10 @@ export async function apiRequest<T>(
     return null as T
   }
 
-  return (await res.json()) as T
+  // Algumas respostas 200 vêm sem corpo (ex.: transições de empréstimo).
+  // Ler como texto e só parsear se houver conteúdo evita "Unexpected end of JSON input".
+  const text = await res.text()
+  return (text ? (JSON.parse(text) as T) : (null as T))
 }
 
 async function safeRequest<T>(request: () => Promise<T>, fallback: T) {

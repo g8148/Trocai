@@ -30,6 +30,7 @@ const NAV_LINKS = [
 const ACCOUNT_LINKS = [
   { href: "/account", label: "Meu perfil" },
   { href: "/account/items", label: "Meus itens" },
+  { href: "/loans", label: "Meus empréstimos" },
   { href: "/account/distance", label: "Distância" },
 ]
 

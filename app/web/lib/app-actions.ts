@@ -69,6 +69,7 @@ export async function createLoanAction(data: {
       body: data,
     })
     revalidatePath("/")
+    revalidatePath("/loans")
     return { ok: true, loan }
   } catch (error) {
     return {
@@ -246,6 +247,45 @@ export async function deleteItemAction(id: string) {
 
 export async function submitSupportAction() {
   return { ok: true }
+}
+
+async function loanTransitionAction(id: string, action: string) {
+  try {
+    await apiRequest(`/api/loans/${id}/${action}/`, {
+      method: "POST",
+      body: {},
+    })
+    revalidatePath("/loans")
+    return { ok: true }
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível concluir a ação.",
+    }
+  }
+}
+
+export async function approveLoanAction(id: string) {
+  return loanTransitionAction(id, "approve")
+}
+
+export async function rejectLoanAction(id: string) {
+  return loanTransitionAction(id, "reject")
+}
+
+export async function cancelLoanAction(id: string) {
+  return loanTransitionAction(id, "cancel")
+}
+
+export async function pickupLoanAction(id: string) {
+  return loanTransitionAction(id, "pickup")
+}
+
+export async function returnLoanAction(id: string) {
+  return loanTransitionAction(id, "return")
 }
 
 export async function fetchApiHealthAction() {
