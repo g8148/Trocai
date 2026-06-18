@@ -2,3 +2,6 @@ CLAUDE.md
 .vscode/
 app/web/*.log
 docs
+
+# Config local do MCP (arquivo não pode ser removido)
+.mcp.json
