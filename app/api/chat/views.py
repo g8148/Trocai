@@ -50,7 +50,10 @@ class MessageListCreateView(generics.ListCreateAPIView):
             pk=self.kwargs["conversation_id"],
             participants=self.request.user,
         )
-        return Message.objects.filter(conversation=conversation).select_related("sender")
+        return Message.objects.filter(
+            conversation=conversation,
+            is_deleted=False,
+        ).select_related("sender")
 
     def perform_create(self, serializer):
         conversation = generics.get_object_or_404(

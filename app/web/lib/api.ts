@@ -67,9 +67,12 @@ export interface ItemSummary {
   estimated_value: string | null
   availability: string
   allow_reservation: boolean
+  is_active: boolean
+  times_borrowed: number
   cover_image: string | null
   images: ItemImage[]
   created_at: string
+  updated_at: string
 }
 
 export interface NotificationEntry {
@@ -138,21 +141,61 @@ export interface ReviewEntry {
 }
 
 type ApiRequestOptions = {
-  method?: "GET" | "POST" | "PATCH"
+  method?: "GET" | "POST" | "PATCH" | "DELETE"
   auth?: boolean
   body?: FormData | Record<string, unknown>
 }
 
-function normalizeErrorMessage(detail: unknown) {
+const FIELD_LABELS: Record<string, string> = {
+  non_field_errors: "Formulário",
+  name: "Nome",
+  description: "Descrição",
+  subcategory: "Subcategoria",
+  condition: "Condição",
+  segregation: "Segregação",
+  estimated_value: "Valor estimado",
+  allow_reservation: "Reservas",
+  image_urls: "Fotos",
+  email: "E-mail",
+  username: "Usuário",
+  password: "Senha",
+  password1: "Senha",
+  password2: "Confirmação de senha",
+}
+
+function formatFieldLabel(key: string) {
+  if (FIELD_LABELS[key]) {
+    return FIELD_LABELS[key]
+  }
+
+  return key
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function collectErrorMessages(detail: unknown, path?: string): string[] {
   if (typeof detail === "string") {
-    return detail
+    return [path ? `${path}: ${detail}` : detail]
   }
 
-  if (Array.isArray(detail) && typeof detail[0] === "string") {
-    return detail[0]
+  if (Array.isArray(detail)) {
+    return detail.flatMap((entry) => collectErrorMessages(entry, path))
   }
 
-  return "Nao foi possivel concluir a requisicao."
+  if (detail && typeof detail === "object") {
+    return Object.entries(detail as Record<string, unknown>).flatMap(
+      ([key, value]) => collectErrorMessages(value, formatFieldLabel(key))
+    )
+  }
+
+  return []
+}
+
+function normalizeErrorMessage(detail: unknown) {
+  const [firstMessage] = collectErrorMessages(detail)
+  return firstMessage ?? "Não foi possível concluir a requisição."
 }
 
 export async function apiRequest<T>(
@@ -178,7 +221,7 @@ export async function apiRequest<T>(
     headers,
     cache: "no-store",
     body:
-      method === "GET"
+      method === "GET" || body === undefined
         ? undefined
         : body instanceof FormData
           ? body
@@ -253,10 +296,19 @@ export async function getItem(id: string) {
 
 export async function getCategories(type?: "tool" | "service") {
   const query = type ? `?type=${type}` : ""
-  return safeRequest<CategoryGroup[]>(
-    () => apiRequest<CategoryGroup[]>(`/api/items/categories/${query}`),
+  const response = await safeRequest<ApiListResponse<CategoryGroup> | CategoryGroup[]>(
+    () =>
+      apiRequest<ApiListResponse<CategoryGroup> | CategoryGroup[]>(
+        `/api/items/categories/${query}`
+      ),
     []
   )
+
+  if (Array.isArray(response)) {
+    return response
+  }
+
+  return response.results ?? []
 }
 
 export async function getNotifications() {

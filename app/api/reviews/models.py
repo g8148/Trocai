@@ -7,8 +7,8 @@ from django.db import models
 
 class Review(models.Model):
     """
-    Avaliacao apos emprestimo (RF020).
-    O usuario avalia tanto o item quanto o fornecedor.
+    Avaliação após empréstimo (RF020).
+    O usuário avalia tanto o item quanto o fornecedor.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -33,21 +33,23 @@ class Review(models.Model):
     )
     user_rating = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text="Nota para o usuario/fornecedor (1-5)",
+        help_text="Nota para o usuário/fornecedor (1-5)",
     )
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="reviews/", blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "Avaliacao"
-        verbose_name_plural = "Avaliacoes"
+        verbose_name = "Avaliação"
+        verbose_name_plural = "Avaliações"
         ordering = ["-created_at"]
-        # Um usuario so pode avaliar uma vez por emprestimo
+        # Um usuário só pode avaliar uma vez por empréstimo
         unique_together = ["loan", "reviewer"]
 
     def __str__(self):
         return (
-            f"Avaliacao de {self.reviewer.username} para {self.reviewed_user.username}"
+            f"Avaliação de {self.reviewer.username} para {self.reviewed_user.username}"
         )

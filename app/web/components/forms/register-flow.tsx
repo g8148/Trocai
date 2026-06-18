@@ -37,7 +37,7 @@ const INITIAL_VALUES: RegisterValues = {
 function splitName(fullName: string) {
   const parts = fullName.trim().split(/\s+/).filter(Boolean)
   return {
-    first_name: parts[0] ?? "Usuario",
+    first_name: parts[0] ?? "Usuário",
     last_name: parts.slice(1).join(" ") || "Trocai",
   }
 }
@@ -88,7 +88,7 @@ export function RegisterFlow() {
 
     if (result.fieldErrors) {
       const firstFieldError = Object.values(result.fieldErrors)[0]?.[0]
-      setError(firstFieldError ?? "Nao foi possivel concluir o cadastro.")
+      setError(firstFieldError ?? "Não foi possível concluir o cadastro.")
       return
     }
 
@@ -102,7 +102,7 @@ export function RegisterFlow() {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-[#182034]">
-                Nome Completo *
+                Nome completo *
               </label>
               <Input
                 value={values.fullName}
@@ -153,7 +153,7 @@ export function RegisterFlow() {
                 placeholder="Digite sua senha"
               />
             </div>
-            <p className="text-sm text-[#5d6678]">* Campos obrigatorios</p>
+            <p className="text-sm text-[#5d6678]">* Campos obrigatórios</p>
             {error ? <p className="text-sm text-red-500">{error}</p> : null}
             <Button
               type="button"
@@ -187,8 +187,7 @@ export function RegisterFlow() {
               </div>
             ))}
             <p className="text-sm leading-6 text-[#5d6678]">
-              Ao se cadastrar, voce concorda com os Termos de Servico e a
-              Politica de Privacidade.
+              Ao se cadastrar, você concorda com os Termos de Serviço e a Política de Privacidade.
             </p>
             {error ? <p className="text-sm text-red-500">{error}</p> : null}
             <div className="flex gap-3">
@@ -221,9 +220,9 @@ export function RegisterFlow() {
             router.push("/")
           }
         }}
-        title="Cadastro concluido com sucesso!"
+        title="Cadastro concluído com sucesso!"
         description={
-          "Sua conta foi criada e ja esta ativa.\n\nVerifique seu e-mail ou telefone para confirmar sua identidade e comecar a usar o app."
+          "Sua conta foi criada e já está ativa.\n\nVerifique seu e-mail ou telefone para confirmar sua identidade e começar a usar o app."
         }
       />
     </>

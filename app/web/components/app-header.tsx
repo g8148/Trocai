@@ -1,59 +1,62 @@
 import Link from "next/link"
-import { MessageCircle, Bell, Search } from "lucide-react"
+import { Bell, MessageCircle, Search } from "lucide-react"
 
 import type { AppUser } from "@/lib/api"
-import { AppNavSheetTrigger } from "@/components/app-nav-sheet"
 import { AppLogo } from "@/components/app-logo"
-import { DesktopUserMenu } from "@/components/desktop-user-menu"
+import { AppNavSheetTrigger } from "@/components/app-nav-sheet"
+import { DesktopCategoryLinks } from "@/components/desktop-category-links"
 import { DesktopSearchBar } from "@/components/desktop-search-bar"
-import { DesktopCategoryLinks } from "./desktop-category-links"
+import { DesktopUserMenu } from "@/components/desktop-user-menu"
 
 export function AppHeader({ user }: { user: AppUser | null }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-black/5 bg-white/90 backdrop-blur-xl">
-      {/* ── Mobile ───────────────────────────────────────────── */}
-      <div className="flex h-14 items-center px-4 lg:hidden">
-        <AppNavSheetTrigger user={user} />
-        <Link href="/" className="mx-auto">
-          <AppLogo />
-        </Link>
-        <Link
-          href="/search"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#182034] transition hover:bg-black/5"
-          aria-label="Buscar"
-        >
-          <Search size={20} />
-        </Link>
-      </div>
+    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90">
+      <div className="mx-auto flex h-14 max-w-[1180px] items-center gap-3 px-4 lg:h-16 lg:px-6">
+        <div className="flex w-full items-center justify-between lg:hidden">
+          <div className="flex items-center gap-2">
+            <AppNavSheetTrigger user={user} />
+            <Link href="/" className="shrink-0">
+              <AppLogo className="h-9" />
+            </Link>
+          </div>
 
-      {/* ── Desktop — barra única ────────────────────────────── */}
-      <div className="mx-auto hidden h-16 max-w-7xl items-center gap-6 px-6 lg:flex">
-        <Link href="/" className="shrink-0">
-          <AppLogo />
-        </Link>
-
-        <div className="h-5 w-px bg-black/8" />
-
-        <DesktopCategoryLinks />
-
-        <DesktopSearchBar />
-
-        <div className="flex shrink-0 items-center gap-1">
           <Link
-            href="/chat"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#182034] transition hover:bg-black/5"
-            aria-label="Chat"
+            href="/search"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[#182034] transition hover:bg-muted"
+            aria-label="Buscar"
           >
-            <MessageCircle size={20} />
+            <Search size={18} />
           </Link>
-          <Link
-            href="/notifications"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#182034] transition hover:bg-black/5"
-            aria-label="Notificações"
-          >
-            <Bell size={20} />
+        </div>
+
+        <div className="hidden w-full items-center gap-5 lg:flex">
+          <Link href="/" className="shrink-0">
+            <AppLogo className="h-10" />
           </Link>
-          <DesktopUserMenu user={user} />
+
+          <DesktopCategoryLinks />
+
+          <div className="min-w-0 flex-1">
+            <DesktopSearchBar />
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1">
+            <Link
+              href="/chat"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[#182034] transition hover:bg-muted"
+              aria-label="Chat"
+            >
+              <MessageCircle size={18} />
+            </Link>
+            <Link
+              href="/notifications"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[#182034] transition hover:bg-muted"
+              aria-label="Notificações"
+            >
+              <Bell size={18} />
+            </Link>
+            <DesktopUserMenu user={user} />
+          </div>
         </div>
       </div>
     </header>

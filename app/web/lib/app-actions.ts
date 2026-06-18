@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 
-import { apiRequest, type AppUser, API_URL } from "./api"
+import { apiRequest, API_URL, type AppUser, type ItemSummary } from "./api"
 import { getAccessToken } from "./auth"
 
 const USER_COOKIE_MAX_AGE = 7 * 24 * 60 * 60
@@ -30,7 +30,7 @@ export async function updateProfileAction(data: Partial<AppUser>) {
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Nao foi possivel salvar.",
+      error: error instanceof Error ? error.message : "Não foi possível salvar.",
     }
   }
 }
@@ -51,7 +51,7 @@ export async function requestPasswordResetAction(login: string) {
       body: { email: login, login },
     })
   } catch {
-    // Mantem resposta generica para nao vazar existencia da conta
+    // Mantém resposta genérica para não vazar existência da conta
   }
 
   return { ok: true }
@@ -73,7 +73,7 @@ export async function createLoanAction(data: {
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Nao foi possivel reservar.",
+      error: error instanceof Error ? error.message : "Não foi possível reservar.",
     }
   }
 }
@@ -94,7 +94,7 @@ export async function createReviewAction(data: {
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Nao foi possivel enviar a avaliacao.",
+      error: error instanceof Error ? error.message : "Não foi possível enviar a avaliação.",
     }
   }
 }
@@ -117,7 +117,7 @@ export async function createReportAction(data: {
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Nao foi possivel enviar a denuncia.",
+      error: error instanceof Error ? error.message : "Não foi possível enviar a denúncia.",
     }
   }
 }
@@ -136,7 +136,7 @@ export async function createConversationAction(data: {
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Nao foi possivel abrir a conversa.",
+      error: error instanceof Error ? error.message : "Não foi possível abrir a conversa.",
     }
   }
 }
@@ -152,7 +152,7 @@ export async function sendMessageAction(conversationId: string, content: string)
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Nao foi possivel enviar a mensagem.",
+      error: error instanceof Error ? error.message : "Não foi possível enviar a mensagem.",
     }
   }
 }
@@ -167,6 +167,80 @@ export async function markNotificationReadAction(id: string) {
     return { ok: true }
   } catch {
     return { ok: false }
+  }
+}
+
+type ItemPayload = {
+  name: string
+  description: string
+  subcategory: string
+  condition: string
+  segregation: string
+  allow_reservation: boolean
+  estimated_value?: string | null
+  image_urls?: string[]
+}
+
+type ItemUpdatePayload = Partial<ItemPayload>
+
+export async function createItemAction(data: ItemPayload) {
+  try {
+    const item = await apiRequest<ItemSummary>("/api/items/", {
+      method: "POST",
+      body: data,
+    })
+    revalidatePath("/")
+    revalidatePath("/account")
+    revalidatePath("/account/items")
+    return { ok: true, item, id: item.id }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Não foi possível criar o item.",
+    }
+  }
+}
+
+export async function updateItemAction(id: string, data: ItemUpdatePayload) {
+  try {
+    const item = await apiRequest<ItemSummary>(`/api/items/${id}/`, {
+      method: "PATCH",
+      body: data,
+    })
+    revalidatePath("/")
+    revalidatePath("/account")
+    revalidatePath("/account/items")
+    revalidatePath(`/items/${id}`)
+    return { ok: true, item }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Não foi possível atualizar o item.",
+    }
+  }
+}
+
+export async function updateItemReservationAction(
+  id: string,
+  allow_reservation: boolean
+) {
+  return updateItemAction(id, { allow_reservation })
+}
+
+export async function deleteItemAction(id: string) {
+  try {
+    await apiRequest(`/api/items/${id}/`, {
+      method: "DELETE",
+    })
+    revalidatePath("/")
+    revalidatePath("/account")
+    revalidatePath("/account/items")
+    return { ok: true }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Não foi possível excluir o item.",
+    }
   }
 }
 

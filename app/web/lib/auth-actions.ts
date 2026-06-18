@@ -6,7 +6,7 @@ import { redirect } from "next/navigation"
 import type { AuthUser } from "./auth"
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
-const API_OFFLINE_MESSAGE = `Nao foi possivel conectar a API em ${BASE_URL}. Inicie o backend para testar login e cadastro.`
+const API_OFFLINE_MESSAGE = `Não foi possível conectar a API em ${BASE_URL}. Inicie o backend para testar login e cadastro.`
 
 const ACCESS_MAX_AGE = 30 * 60
 const REFRESH_MAX_AGE = 7 * 24 * 60 * 60
@@ -68,7 +68,7 @@ function getAuthErrorMessage(body: Record<string, string[] | string> | null) {
     return body.detail
   }
 
-  return "Credenciais invalidas."
+  return "Credenciais inválidas."
 }
 
 export async function loginAction(data: {
@@ -77,9 +77,10 @@ export async function loginAction(data: {
 }): Promise<{ error?: string }> {
   const login = typeof data.login === "string" ? data.login.trim() : ""
   const password = typeof data.password === "string" ? data.password : ""
+  const isEmailLogin = login.includes("@")
 
   if (!login || !password) {
-    return { error: "Informe usuario ou email e senha para entrar." }
+    return { error: "Informe usuário ou e-mail e senha para entrar." }
   }
 
   let res: Response
@@ -89,8 +90,7 @@ export async function loginAction(data: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: login,
-        username: login,
+        ...(isEmailLogin ? { email: login } : { username: login }),
         password,
       }),
     })
@@ -106,7 +106,7 @@ export async function loginAction(data: {
   const body = await parseJsonResponse<LoginResponse>(res)
 
   if (!body?.access || !body.refresh || !body.user) {
-    return { error: "A API respondeu sem os dados esperados de autenticacao." }
+    return { error: "A API respondeu sem os dados esperados de autenticação." }
   }
 
   await setAuthCookies(body.access, body.refresh, body.user)
@@ -144,13 +144,13 @@ export async function registerAction(data: {
     const body = await parseJsonResponse<FieldErrors>(res)
     return body
       ? { fieldErrors: body }
-      : { error: "Nao foi possivel concluir o cadastro." }
+      : { error: "Não foi possível concluir o cadastro." }
   }
 
   const body = await parseJsonResponse<LoginResponse>(res)
 
   if (!body?.access || !body.refresh || !body.user) {
-    return { error: "A API respondeu sem os dados esperados de autenticacao." }
+    return { error: "A API respondeu sem os dados esperados de autenticação." }
   }
 
   await setAuthCookies(body.access, body.refresh, body.user)

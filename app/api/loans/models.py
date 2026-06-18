@@ -6,8 +6,8 @@ from django.db import models
 
 class Loan(models.Model):
     """
-    Emprestimo de item (RF002, RF003, RF005).
-    Representa a transacao entre quem empresta e quem pega emprestado.
+    Empréstimo de item (RF002, RF003, RF005).
+    Representa a transação entre quem empresta e quem pega emprestado.
     """
 
     class StatusChoices(models.TextChoices):
@@ -28,13 +28,13 @@ class Loan(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="loans_as_borrower",
-        help_text="Usuario que pega emprestado",
+        help_text="Usuário que pega emprestado",
     )
     lender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="loans_as_lender",
-        help_text="Usuario que empresta (dono do item)",
+        help_text="Usuário que empresta (dono do item)",
     )
 
     status = models.CharField(
@@ -49,12 +49,12 @@ class Loan(models.Model):
     expected_return_date = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="Data/hora prevista para devolucao",
+        help_text="Data/hora prevista para devolução",
     )
     actual_return_date = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="Data/hora real da devolucao",
+        help_text="Data/hora real da devolução",
     )
 
     # Observacoes
@@ -63,10 +63,12 @@ class Loan(models.Model):
 
     # Metadata
     updated_at = models.DateTimeField(auto_now=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "Emprestimo"
-        verbose_name_plural = "Emprestimos"
+        verbose_name = "Empréstimo"
+        verbose_name_plural = "Empréstimos"
         ordering = ["-requested_at"]
         indexes = [
             models.Index(fields=["status"]),
@@ -81,7 +83,7 @@ class Loan(models.Model):
 class Reservation(models.Model):
     """
     Reserva antecipada de item (RF005).
-    Permite reservar um item que esta emprestado no momento.
+    Permite reservar um item que está emprestado no momento.
     """
 
     class StatusChoices(models.TextChoices):
@@ -105,14 +107,14 @@ class Reservation(models.Model):
         null=True,
         blank=True,
         related_name="reservations",
-        help_text="Emprestimo vigente que originou esta reserva",
+        help_text="Empréstimo vigente que originou esta reserva",
     )
     status = models.CharField(
         max_length=20,
         choices=StatusChoices.choices,
         default=StatusChoices.ACTIVE,
     )
-    desired_date = models.DateTimeField(help_text="Data desejada para o emprestimo")
+    desired_date = models.DateTimeField(help_text="Data desejada para o empréstimo")
     notes = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

@@ -64,11 +64,18 @@
   }
 
   body {
-    @apply min-h-svh bg-background text-foreground;
+    @apply min-h-svh text-foreground;
+    background:
+      radial-gradient(circle at top, rgba(47, 177, 194, 0.08), transparent 24rem),
+      linear-gradient(180deg, #fcfcfa 0%, #f6f8f6 100%);
     font-feature-settings:
       "ss01" 1,
       "ss02" 1,
       "cv03" 1;
+  }
+
+  ::selection {
+    background: rgba(47, 177, 194, 0.18);
   }
 
   button,

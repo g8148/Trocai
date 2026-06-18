@@ -50,8 +50,7 @@ export function ConfirmReservation({
         </div>
 
         <p className="text-center text-[1.25rem] leading-[1.15] tracking-[-0.04em] text-[#182034]">
-          * A reserva esta sujeita a aprovacoes e acoes de outros usuarios,
-          incluindo, mas nao se limitando, a devolucoes.
+          * A reserva está sujeita a aprovações e ações de outros usuários, incluindo, mas não se limitando, a devoluções.
         </p>
 
         {message ? <p className="text-center text-sm text-red-500">{message}</p> : null}
@@ -68,7 +67,7 @@ export function ConfirmReservation({
             })
 
             if (!result.ok) {
-              setMessage(result.error ?? "Nao foi possivel finalizar.")
+              setMessage(result.error ?? "Não foi possível finalizar.")
               return
             }
 

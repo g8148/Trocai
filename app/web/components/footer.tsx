@@ -2,45 +2,28 @@ import Link from "next/link"
 
 export function Footer() {
   return (
-    <footer className="mt-8 border-t border-black/5 bg-[#fefefe]">
-      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          {/* Marca */}
-          <div className="space-y-2">
-            <p className="text-[2.6rem] leading-none font-semibold tracking-[-0.06em] text-[#182034]">
-              Trocai
-            </p>
-            <p className="text-sm text-[#5d6678]">
-              Empréstimo de ferramentas entre vizinhos.
-            </p>
-          </div>
-
-          {/* Links */}
-          <nav className="flex flex-col gap-2 text-sm text-[#5d6678]">
-            <Link
-              href="/sobre"
-              className="w-fit transition-colors hover:text-[#182034]"
-            >
-              Sobre o projeto
-            </Link>
-            {/*<Link
-              href="#"
-              className="w-fit transition-colors hover:text-[#182034]"
-            >
-              Como funciona
-            </Link>*/}
-            <Link
-              href="/contato"
-              className="w-fit transition-colors hover:text-[#182034]"
-            >
-              Contato
-            </Link>
-          </nav>
+    <footer className="mt-10 w-full border-t bg-background">
+      <div className="mx-auto flex max-w-[1180px] flex-col gap-4 px-4 py-6 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between lg:px-6">
+        <div>
+          <p className="font-semibold tracking-tight text-foreground">Trocai</p>
+          <p className="mt-1 text-sm">
+            Empréstimo de ferramentas e serviços com uma experiência simples e direta.
+          </p>
         </div>
 
-        <p className="mt-8 border-t border-black/5 pt-5 text-xs text-[#5d6678]">
-          © 2026 Trocai · Projeto acadêmico UNOESC
-        </p>
+        <nav className="flex flex-wrap items-center gap-4">
+          <Link href="/sobre" className="transition-colors hover:text-foreground">
+            Sobre
+          </Link>
+          <Link href="/search" className="transition-colors hover:text-foreground">
+            Explorar
+          </Link>
+          <Link href="/support" className="transition-colors hover:text-foreground">
+            Suporte
+          </Link>
+        </nav>
+
+        <p className="text-xs">© 2026 Trocai</p>
       </div>
     </footer>
   )

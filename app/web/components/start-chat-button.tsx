@@ -27,10 +27,12 @@ export function StartChatButton({
               item: itemId,
               target_user: targetUserId,
             })
+
             if (!result.ok || !result.id) {
-              setError(result.error ?? "Nao foi possivel abrir a conversa.")
+              setError(result.error ?? "Não foi possível abrir a conversa.")
               return
             }
+
             router.push(`/chat/${result.id}`)
           })
         }

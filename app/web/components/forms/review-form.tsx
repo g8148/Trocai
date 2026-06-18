@@ -56,7 +56,7 @@ export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
   return (
     <>
       <div className="space-y-5 px-5 pb-8 pt-6">
-        <p className="text-sm text-[#5d6678]">* Campos obrigatorios</p>
+        <p className="text-sm text-[#5d6678]">* Campos obrigatórios</p>
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#182034]">Ferramenta *</label>
           <select
@@ -65,7 +65,7 @@ export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
             className="h-12 w-full rounded-2xl border border-black/10 px-4 text-base text-[#182034]"
           >
             {reviewableLoans.length === 0 ? (
-              <option value="">Nenhum emprestimo devolvido encontrado</option>
+              <option value="">Nenhum empréstimo devolvido encontrado</option>
             ) : null}
             {reviewableLoans.map((loan) => (
               <option key={loan.id} value={loan.id}>
@@ -83,7 +83,7 @@ export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
           />
         </div>
         <StarRating
-          label="Como foi a experiencia com o item? *"
+          label="Como foi a experiência com o item? *"
           value={itemRating}
           onChange={setItemRating}
         />
@@ -93,7 +93,7 @@ export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
           onChange={setUserRating}
         />
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#182034]">Descricao</label>
+          <label className="block text-sm font-medium text-[#182034]">Descrição</label>
           <textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
@@ -110,19 +110,22 @@ export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
           onClick={() =>
             startTransition(async () => {
               if (!selectedLoan) {
-                setError("Selecione um emprestimo devolvido.")
+                setError("Selecione um empréstimo devolvido.")
                 return
               }
+
               const result = await createReviewAction({
                 loan: selectedLoan,
                 item_rating: itemRating,
                 user_rating: userRating,
                 description,
               })
+
               if (!result.ok) {
-                setError(result.error ?? "Erro ao enviar avaliacao.")
+                setError(result.error ?? "Erro ao enviar avaliação.")
                 return
               }
+
               setShowSuccess(true)
             })
           }
@@ -136,8 +139,8 @@ export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
       <SuccessDialog
         open={showSuccess}
         onOpenChange={setShowSuccess}
-        title="Avaliacao enviada"
-        description="Obrigado! Sua avaliacao ja foi registrada com sucesso."
+        title="Avaliação enviada"
+        description="Obrigado! Sua avaliação já foi registrada com sucesso."
       />
     </>
   )

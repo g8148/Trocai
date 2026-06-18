@@ -13,7 +13,7 @@ class NotificationListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user)
+        return Notification.objects.filter(recipient=self.request.user, is_deleted=False)
 
 
 @extend_schema(tags=["Notificacoes"])
@@ -22,7 +22,7 @@ class NotificationReadView(APIView):
 
     def post(self, request, pk):
         notification = generics.get_object_or_404(
-            Notification, pk=pk, recipient=request.user
+            Notification, pk=pk, recipient=request.user, is_deleted=False
         )
         notification.is_read = True
         notification.save(update_fields=["is_read"])

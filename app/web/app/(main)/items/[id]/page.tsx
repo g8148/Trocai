@@ -2,8 +2,10 @@ import Link from "next/link"
 import { Star } from "lucide-react"
 import { notFound } from "next/navigation"
 
-import { getItem } from "@/lib/api"
+import { getCategories, getItem, getMe } from "@/lib/api"
+import { getItemGalleryImages } from "@/lib/item-visuals"
 import { ItemGallery } from "@/components/item-gallery"
+import { ItemOwnerActions } from "@/components/item-owner-actions"
 import { StartChatButton } from "@/components/start-chat-button"
 import {
   Breadcrumb,
@@ -23,7 +25,7 @@ const CONDITION_LABEL: Record<string, string> = {
 
 const SEGREGATION_LABEL: Record<string, string> = {
   hobby: "Hobby",
-  semi_professional: "Semi profissional",
+  semi_professional: "Semi-profissional",
   professional: "Profissional",
 }
 
@@ -47,10 +49,13 @@ export default async function ItemDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const user = await getMe()
   const item = await getItem(id)
 
   if (!item) notFound()
 
+  const isOwner = user?.id === item.owner.id
+  const categories = isOwner ? await getCategories() : []
   const avail = AVAILABILITY[item.availability] ?? {
     label: item.availability,
     className: "bg-gray-50 text-gray-600",
@@ -58,13 +63,11 @@ export default async function ItemDetailPage({
   const ownerInitial = (
     item.owner.first_name?.[0] ?? item.owner.username[0]
   ).toUpperCase()
-
-  const images = item.images ?? []
+  const images = getItemGalleryImages(item)
 
   return (
     <div className="pb-28 lg:pb-10">
-      {/* Breadcrumbs */}
-      <div className="px-4 pt-4 pb-4 lg:px-0">
+      <div className="px-4 pb-4 pt-4 lg:px-0">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -73,7 +76,7 @@ export default async function ItemDetailPage({
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
-            {item.category_name && (
+            {item.category_name ? (
               <>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
@@ -82,7 +85,7 @@ export default async function ItemDetailPage({
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
               </>
-            )}
+            ) : null}
             <BreadcrumbItem>
               <BreadcrumbPage className="max-w-[200px] truncate">
                 {item.name}
@@ -92,40 +95,40 @@ export default async function ItemDetailPage({
         </Breadcrumb>
       </div>
 
-      {/* Conteúdo principal */}
       <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-10">
-        {/* Galeria */}
         <div className="px-4 lg:px-0">
           <ItemGallery images={images} name={item.name} />
         </div>
 
-        {/* Detalhes */}
         <div className="px-4 pt-5 lg:px-0 lg:pt-0">
-          {/* Categoria + título */}
-          {item.category_name && (
+          {item.category_name ? (
             <p className="mb-1.5 text-xs font-medium uppercase tracking-[0.16em] text-[#2fb1c2]">
               {item.category_name}
               {item.subcategory_name ? ` · ${item.subcategory_name}` : ""}
             </p>
-          )}
+          ) : null}
           <h1 className="text-2xl font-semibold leading-tight tracking-[-0.03em] text-[#182034] lg:text-3xl">
             {item.name}
           </h1>
 
-          {/* Rating */}
-          <div className="mt-2 mb-4 flex items-center gap-2">
+          <div className="mb-4 mt-2 flex items-center gap-2">
             <div className="flex gap-0.5 text-[#ff8b2c]">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-3.5 w-3.5" fill={i < 4 ? "currentColor" : "none"} />
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Star
+                  key={index}
+                  className="h-3.5 w-3.5"
+                  fill={index < 4 ? "currentColor" : "none"}
+                />
               ))}
             </div>
             <span className="text-xs text-[#8a92a3]">4.0</span>
-            <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium ${avail.className}`}>
+            <span
+              className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium ${avail.className}`}
+            >
               {avail.label}
             </span>
           </div>
 
-          {/* Proprietário — linha compacta */}
           <div className="mb-4 flex items-center gap-2">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#10182c] text-[11px] font-semibold text-white">
               {ownerInitial}
@@ -138,7 +141,6 @@ export default async function ItemDetailPage({
             </span>
           </div>
 
-          {/* Badges */}
           <div className="mb-5 flex flex-wrap gap-1.5">
             <span className="rounded-md bg-[#f4f5f7] px-2.5 py-1 text-xs font-medium text-[#5d6678]">
               {CONDITION_LABEL[item.condition] ?? item.condition}
@@ -146,15 +148,14 @@ export default async function ItemDetailPage({
             <span className="rounded-md bg-[#f4f5f7] px-2.5 py-1 text-xs font-medium text-[#5d6678]">
               {SEGREGATION_LABEL[item.segregation] ?? item.segregation}
             </span>
-            {item.allow_reservation && (
+            {item.allow_reservation ? (
               <span className="rounded-md bg-[#edfafe] px-2.5 py-1 text-xs font-medium text-[#2fb1c2]">
                 Aceita reservas
               </span>
-            )}
+            ) : null}
           </div>
 
-          {/* Descrição */}
-          {item.description && (
+          {item.description ? (
             <div className="mb-5">
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#b0b8c5]">
                 Descrição
@@ -163,10 +164,9 @@ export default async function ItemDetailPage({
                 {item.description}
               </p>
             </div>
-          )}
+          ) : null}
 
-          {/* Valor */}
-          {item.estimated_value && (
+          {item.estimated_value ? (
             <div className="mb-6">
               <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#b0b8c5]">
                 Valor estimado
@@ -175,31 +175,41 @@ export default async function ItemDetailPage({
                 {formatCurrency(item.estimated_value)}
               </p>
             </div>
-          )}
+          ) : null}
 
-          {/* Ações — desktop */}
           <div className="hidden flex-col gap-2.5 lg:flex">
-            <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
-            <Link
-              href={`/items/${item.id}/reserve`}
-              className="flex h-14 w-full items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
-            >
-              Solicitar empréstimo
-            </Link>
+            {isOwner ? (
+              <ItemOwnerActions item={item} categories={categories} isOwner={isOwner} />
+            ) : (
+              <>
+                <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
+                <Link
+                  href={`/items/${item.id}/reserve`}
+                  className="flex h-14 w-full items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
+                >
+                  Solicitar empréstimo
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Ações — mobile fixo na base */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-black/5 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
         <div className="flex gap-2.5">
-          <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
-          <Link
-            href={`/items/${item.id}/reserve`}
-            className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
-          >
-            Reservar
-          </Link>
+          {isOwner ? (
+            <ItemOwnerActions item={item} categories={categories} isOwner={isOwner} />
+          ) : (
+            <>
+              <StartChatButton itemId={item.id} targetUserId={item.owner.id} />
+              <Link
+                href={`/items/${item.id}/reserve`}
+                className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
+              >
+                Reservar
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

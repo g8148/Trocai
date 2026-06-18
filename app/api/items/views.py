@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions
 from rest_framework.permissions import SAFE_METHODS, BasePermission
@@ -40,7 +41,7 @@ class ItemListCreateView(generics.ListCreateAPIView):
     ).prefetch_related("images")
 
     def get_queryset(self):
-        queryset = self.queryset.filter(is_active=True)
+        queryset = self.queryset.filter(is_active=True, is_deleted=False)
         p = self.request.query_params
 
         category_type = p.get("type")
@@ -87,4 +88,11 @@ class ItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     queryset = Item.objects.select_related(
         "owner", "subcategory", "subcategory__category"
-    ).prefetch_related("images").filter(is_active=True)
+    ).prefetch_related("images").filter(is_active=True, is_deleted=False)
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.is_deleted = True
+        instance.deleted_at = timezone.now()
+        instance.availability = Item.AvailabilityChoices.UNAVAILABLE
+        instance.save()

@@ -6,19 +6,19 @@ from django.db import models
 
 class Notification(models.Model):
     """
-    Notificacoes do sistema (RF004).
-    Lembrar sobre prazos, novas solicitacoes, confirmacoes, etc.
+    Notificações do sistema (RF004).
+    Lembrar sobre prazos, novas solicitações, confirmações, etc.
     """
 
     class TypeChoices(models.TextChoices):
-        LOAN_REQUEST = "loan_request", "Solicitacao de emprestimo"
-        LOAN_APPROVED = "loan_approved", "Emprestimo aprovado"
-        LOAN_REJECTED = "loan_rejected", "Emprestimo rejeitado"
-        RETURN_REMINDER = "return_reminder", "Lembrete de devolucao"
-        RETURN_OVERDUE = "return_overdue", "Devolucao atrasada"
+        LOAN_REQUEST = "loan_request", "Solicitação de empréstimo"
+        LOAN_APPROVED = "loan_approved", "Empréstimo aprovado"
+        LOAN_REJECTED = "loan_rejected", "Empréstimo rejeitado"
+        RETURN_REMINDER = "return_reminder", "Lembrete de devolução"
+        RETURN_OVERDUE = "return_overdue", "Devolução atrasada"
         RESERVATION = "reservation", "Nova reserva"
         NEW_MESSAGE = "new_message", "Nova mensagem"
-        REVIEW = "review", "Nova avaliacao"
+        REVIEW = "review", "Nova avaliação"
         SYSTEM = "system", "Sistema"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -37,10 +37,12 @@ class Notification(models.Model):
     related_object_id = models.UUIDField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "Notificacao"
-        verbose_name_plural = "Notificacoes"
+        verbose_name = "Notificação"
+        verbose_name_plural = "Notificações"
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["recipient", "is_read"]),
