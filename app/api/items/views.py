@@ -2,10 +2,16 @@ from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions
 from rest_framework.permissions import SAFE_METHODS, BasePermission
+from django.core.files.storage import default_storage
+from rest_framework import status
+from rest_framework.response import Response
 
 from .models import Category, Item
-from .serializers import CategorySerializer, ItemSerializer
-
+from .serializers import (
+    CategorySerializer,
+    ItemSerializer,
+    ImageUploadSerializer,
+)
 
 class IsOwnerOrReadOnly(BasePermission):
     def has_object_permission(self, request, view, obj):
@@ -88,3 +94,21 @@ class ItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Item.objects.select_related(
         "owner", "subcategory", "subcategory__category"
     ).prefetch_related("images").filter(is_active=True)
+
+@extend_schema(tags=["Itens"])
+class ItemImageUploadView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ImageUploadSerializer
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = serializer.validated_data["file"]
+        path = default_storage.save(
+            f"items/{request.user.id}/{file.name}",
+            file,
+        )
+        url = default_storage.url(path)
+        return Response(
+            {"url": url},
+            status=status.HTTP_201_CREATED,
+        )

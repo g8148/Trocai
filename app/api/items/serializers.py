@@ -84,3 +84,16 @@ class ItemSerializer(serializers.ModelSerializer):
 
         first_image = next(iter(obj.images.all()), None)
         return first_image.image if first_image else None
+
+class ImageUploadSerializer(serializers.Serializer):
+    file = serializers.ImageField()
+    def validate_file(self, file):
+        if not file.content_type.startswith("image/"):
+            raise serializers.ValidationError(
+                "Envie apenas imagens."
+            )
+        if file.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError(
+                "Imagem deve ter no máximo 5MB."
+            )
+        return file
