@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Star } from "lucide-react"
 import { notFound } from "next/navigation"
 
-import { getCategories, getItem, getMe } from "@/lib/api"
+import { getCategories, getItem, getMe, getReviews } from "@/lib/api"
 import { getItemGalleryImages } from "@/lib/item-visuals"
 import { ItemGallery } from "@/components/item-gallery"
 import { ItemOwnerActions } from "@/components/item-owner-actions"
@@ -64,6 +64,8 @@ export default async function ItemDetailPage({
     item.owner.first_name?.[0] ?? item.owner.username[0]
   ).toUpperCase()
   const images = getItemGalleryImages(item)
+  const reviews = await getReviews({ item: item.id })
+  const rating = item.average_rating
 
   return (
     <div className="pb-28 lg:pb-10">
@@ -117,11 +119,17 @@ export default async function ItemDetailPage({
                 <Star
                   key={index}
                   className="h-3.5 w-3.5"
-                  fill={index < 4 ? "currentColor" : "none"}
+                  fill={
+                    rating !== null && index < Math.round(rating)
+                      ? "currentColor"
+                      : "none"
+                  }
                 />
               ))}
             </div>
-            <span className="text-xs text-[#8a92a3]">4.0</span>
+            <span className="text-xs text-[#8a92a3]">
+              {rating !== null ? `${rating} (${item.review_count})` : "Sem avaliações"}
+            </span>
             <span
               className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium ${avail.className}`}
             >
@@ -130,8 +138,16 @@ export default async function ItemDetailPage({
           </div>
 
           <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#10182c] text-[11px] font-semibold text-white">
-              {ownerInitial}
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#10182c] text-[11px] font-semibold text-white">
+              {item.owner.avatar ? (
+                <img
+                  src={item.owner.avatar}
+                  alt={item.owner.first_name || item.owner.username}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                ownerInitial
+              )}
             </div>
             <span className="text-sm text-[#5d6678]">
               <span className="font-medium text-[#182034]">
@@ -177,6 +193,33 @@ export default async function ItemDetailPage({
             </div>
           ) : null}
 
+          {reviews.length > 0 ? (
+            <div className="mb-6">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#b0b8c5]">
+                Avaliações
+              </p>
+              <div className="space-y-3">
+                {reviews.map((review) => (
+                  <div key={review.id} className="rounded-xl border border-black/6 p-3">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="text-sm font-medium text-[#182034]">
+                        {review.reviewer.first_name || review.reviewer.username}
+                      </span>
+                      <span className="flex gap-0.5 text-[#ff8b2c]">
+                        {Array.from({ length: review.item_rating }).map((_, i) => (
+                          <Star key={i} className="h-3 w-3" fill="currentColor" />
+                        ))}
+                      </span>
+                    </div>
+                    {review.description ? (
+                      <p className="text-sm text-[#5d6678]">{review.description}</p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="hidden flex-col gap-2.5 lg:flex">
             {isOwner ? (
               <ItemOwnerActions item={item} categories={categories} isOwner={isOwner} />
@@ -187,7 +230,7 @@ export default async function ItemDetailPage({
                   href={`/items/${item.id}/reserve`}
                   className="flex h-14 w-full items-center justify-center rounded-2xl border border-black/10 text-sm font-semibold text-[#182034] transition hover:bg-black/5"
                 >
-                  Solicitar empréstimo
+                  Reservar
                 </Link>
               </>
             )}

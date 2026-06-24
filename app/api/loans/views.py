@@ -32,6 +32,9 @@ class LoanListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         item = serializer.validated_data["item"]
 
+        if item.owner == self.request.user:
+            raise ValidationError("Você não pode solicitar o empréstimo do próprio item.")
+
         if item.is_deleted or not item.is_active:
             raise ValidationError("Item indisponível")
 

@@ -115,6 +115,20 @@ class LoanTests(APITestCase):
         response = self.client.post(self.list_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_loan_own_item_returns_400(self):
+        # O dono nao pode solicitar emprestimo do proprio item.
+        self.client.force_authenticate(user=self.lender)
+        pickup = timezone.now() + timedelta(days=2)
+        expected = timezone.now() + timedelta(days=9)
+        data = {
+            'item': str(self.item_available.id),
+            'pickup_date': pickup.isoformat(),
+            'expected_return_date': expected.isoformat(),
+        }
+        response = self.client.post(self.list_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Loan.objects.filter(borrower=self.lender).count(), 0)
+
     def test_approve_loan_owner_returns_200(self):
         # Requer: colega implementa LoanApproveView (stub retorna 501)
         self.client.force_authenticate(user=self.lender)

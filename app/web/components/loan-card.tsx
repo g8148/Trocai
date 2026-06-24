@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { UserRound, CalendarDays, RotateCcw } from "lucide-react"
+import { toast } from "sonner"
 
 import type { LoanEntry } from "@/lib/api"
 import {
@@ -72,9 +74,12 @@ export function LoanCard({ loan, role }: { loan: LoanEntry; role: Role }) {
     startTransition(async () => {
       const result = await action.run(loan.id)
       if (!result.ok) {
-        setError(result.error ?? "Não foi possível concluir a ação.")
+        const message = result.error ?? "Não foi possível concluir a ação."
+        setError(message)
+        toast.error(message)
         return
       }
+      toast.success("Tudo certo! Empréstimo atualizado.")
       router.refresh()
     })
   }
@@ -165,6 +170,17 @@ export function LoanCard({ loan, role }: { loan: LoanEntry; role: Role }) {
               {action.label}
             </button>
           ))}
+        </div>
+      )}
+
+      {loan.status === "returned" && (
+        <div className="mt-4">
+          <Link
+            href={`/reviews/new?loan=${loan.id}`}
+            className="inline-flex h-10 items-center rounded-lg bg-[#2fb1c2] px-4 text-sm font-medium text-white transition-colors hover:bg-[#26a0b0]"
+          >
+            Avaliar
+          </Link>
         </div>
       )}
     </div>

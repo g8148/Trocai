@@ -31,11 +31,10 @@ const ACCOUNT_LINKS = [
   { href: "/account", label: "Meu perfil" },
   { href: "/account/items", label: "Meus itens" },
   { href: "/loans", label: "Meus empréstimos" },
-  { href: "/account/distance", label: "Distância" },
 ]
 
 const SUPPORT_LINKS = [
-  { href: "/support", label: "Central de ajuda" },
+  { href: "/contato", label: "Contato" },
   { href: "/reports/new", label: "Fazer denúncia" },
 ]
 
@@ -137,8 +136,16 @@ function NavSheetContent({ user }: { user: AppUser | null }) {
         {user ? (
           <>
             <div className="flex flex-col items-center gap-3 px-5 pb-5 pt-2">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e8f7f9]">
-                <UserRound size={28} className="text-[#2fb1c2]" />
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#e8f7f9]">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.first_name || user.username}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserRound size={28} className="text-[#2fb1c2]" />
+                )}
               </div>
 
               <p className="text-sm font-semibold text-[#182034]">

@@ -18,6 +18,7 @@ export interface AppUser extends AuthUser {
   status: "available" | "away" | "blocked"
   email_verified: boolean
   phone_verified: boolean
+  average_rating: number | null
 }
 
 export interface ApiListResponse<T> {
@@ -70,6 +71,8 @@ export interface ItemSummary {
   is_active: boolean
   times_borrowed: number
   cover_image: string | null
+  average_rating: number | null
+  review_count: number
   images: ItemImage[]
   created_at: string
   updated_at: string
@@ -348,6 +351,23 @@ export async function getMessages(conversationId: string) {
 export async function getLoans() {
   const response = await safeRequest<ApiListResponse<LoanEntry>>(
     () => apiRequest<ApiListResponse<LoanEntry>>("/api/loans/"),
+    { count: 0, next: null, previous: null, results: [] }
+  )
+  return response.results
+}
+
+export async function getReviews(params?: {
+  item?: string
+  reviewed_user?: string
+  reviewer?: string
+}) {
+  const query = new URLSearchParams()
+  if (params?.item) query.set("item", params.item)
+  if (params?.reviewed_user) query.set("reviewed_user", params.reviewed_user)
+  if (params?.reviewer) query.set("reviewer", params.reviewer)
+  const qs = query.toString()
+  const response = await safeRequest<ApiListResponse<ReviewEntry>>(
+    () => apiRequest<ApiListResponse<ReviewEntry>>(`/api/reviews/${qs ? `?${qs}` : ""}`),
     { count: 0, next: null, previous: null, results: [] }
   )
   return response.results

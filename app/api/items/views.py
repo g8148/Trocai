@@ -1,11 +1,16 @@
-from django.db.models import Q
+import os
+import uuid
+
+from django.core.files.storage import default_storage
+from django.db.models import Avg, Count, Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.permissions import SAFE_METHODS, BasePermission
+from rest_framework.response import Response
 
 from .models import Category, Item
-from .serializers import CategorySerializer, ItemSerializer
+from .serializers import CategorySerializer, ImageUploadSerializer, ItemSerializer
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -76,6 +81,17 @@ class ItemListCreateView(generics.ListCreateAPIView):
                 | Q(subcategory__category__name__icontains=search)
             )
 
+        queryset = queryset.annotate(
+            avg_item_rating=Avg(
+                "loans__reviews__item_rating",
+                filter=Q(loans__reviews__is_deleted=False),
+            ),
+            num_reviews=Count(
+                "loans__reviews",
+                filter=Q(loans__reviews__is_deleted=False),
+            ),
+        )
+
         return queryset.order_by("-created_at")
 
     def perform_create(self, serializer):
@@ -86,9 +102,21 @@ class ItemListCreateView(generics.ListCreateAPIView):
 class ItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ItemSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
-    queryset = Item.objects.select_related(
-        "owner", "subcategory", "subcategory__category"
-    ).prefetch_related("images").filter(is_active=True, is_deleted=False)
+    queryset = (
+        Item.objects.select_related("owner", "subcategory", "subcategory__category")
+        .prefetch_related("images")
+        .annotate(
+            avg_item_rating=Avg(
+                "loans__reviews__item_rating",
+                filter=Q(loans__reviews__is_deleted=False),
+            ),
+            num_reviews=Count(
+                "loans__reviews",
+                filter=Q(loans__reviews__is_deleted=False),
+            ),
+        )
+        .filter(is_active=True, is_deleted=False)
+    )
 
     def perform_destroy(self, instance):
         instance.is_active = False
@@ -96,3 +124,21 @@ class ItemDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.deleted_at = timezone.now()
         instance.availability = Item.AvailabilityChoices.UNAVAILABLE
         instance.save()
+
+
+@extend_schema(tags=["Itens"])
+class ItemImageUploadView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ImageUploadSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = serializer.validated_data["file"]
+        # Nome cru (com espacos/acentos/virgulas) gera URLs frageis e pode colidir.
+        # Gera um nome unico e seguro, preservando apenas a extensao.
+        extension = os.path.splitext(file.name)[1].lower()
+        filename = f"{uuid.uuid4().hex}{extension}"
+        path = default_storage.save(f"items/{request.user.id}/{filename}", file)
+        url = request.build_absolute_uri(default_storage.url(path))
+        return Response({"url": url}, status=status.HTTP_201_CREATED)

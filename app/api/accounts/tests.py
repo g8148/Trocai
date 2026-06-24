@@ -81,3 +81,32 @@ class AccountsTests(APITestCase):
     def test_get_profile_unauthenticated_returns_401(self):
         response = self.client.get(self.me_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class MeAverageRatingTests(APITestCase):
+
+    def test_me_exposes_average_rating(self):
+        from items.models import Category, Item
+        from loans.models import Loan
+        from reviews.models import Review
+
+        lender = User.objects.create_user(
+            username='lm', email='lm@test.com', password='senha123', cpf='141.141.141-41',
+        )
+        borrower = User.objects.create_user(
+            username='bm', email='bm@test.com', password='senha123', cpf='151.151.151-51',
+        )
+        Category.objects.create(name='Cat M', type='tool')
+        item = Item.objects.create(owner=lender, name='Item M', description='x')
+        loan = Loan.objects.create(
+            item=item, borrower=borrower, lender=lender, status='returned',
+            pickup_date='2026-03-01T10:00:00Z', expected_return_date='2026-03-10T10:00:00Z',
+        )
+        Review.objects.create(
+            loan=loan, reviewer=borrower, reviewed_user=lender,
+            item_rating=4, user_rating=5,
+        )
+        self.client.force_authenticate(user=lender)
+        response = self.client.get('/api/accounts/me/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['average_rating'], 5.0)

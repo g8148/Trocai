@@ -35,12 +35,37 @@ export async function updateProfileAction(data: Partial<AppUser>) {
   }
 }
 
-export async function updateUserStatusAction(status: AppUser["status"]) {
-  return updateProfileAction({ status })
+export async function uploadAvatarAction(formData: FormData) {
+  const file = formData.get("avatar")
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false as const, error: "Selecione uma imagem válida." }
+  }
+
+  try {
+    const upload = new FormData()
+    upload.append("avatar", file)
+
+    const user = await apiRequest<AppUser>("/api/accounts/me/", {
+      method: "PATCH",
+      body: upload,
+    })
+    await storeCurrentUser(user)
+    revalidatePath("/account")
+    return { ok: true as const, user }
+  } catch (error) {
+    return {
+      ok: false as const,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível atualizar a foto.",
+    }
+  }
 }
 
-export async function updateDistanceAction(search_radius_km: number) {
-  return updateProfileAction({ search_radius_km })
+export async function updateUserStatusAction(status: AppUser["status"]) {
+  return updateProfileAction({ status })
 }
 
 export async function requestPasswordResetAction(login: string) {
@@ -228,6 +253,37 @@ export async function updateItemReservationAction(
   return updateItemAction(id, { allow_reservation })
 }
 
+export async function uploadItemImageAction(formData: FormData) {
+  const file = formData.get("file")
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false as const, error: "Selecione uma imagem válida." }
+  }
+
+  try {
+    const upload = new FormData()
+    upload.append("file", file)
+
+    const { url } = await apiRequest<{ url: string }>(
+      "/api/items/images/upload/",
+      {
+        method: "POST",
+        body: upload,
+      }
+    )
+
+    return { ok: true as const, url }
+  } catch (error) {
+    return {
+      ok: false as const,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar a imagem.",
+    }
+  }
+}
+
 export async function deleteItemAction(id: string) {
   try {
     await apiRequest(`/api/items/${id}/`, {
@@ -243,10 +299,6 @@ export async function deleteItemAction(id: string) {
       error: error instanceof Error ? error.message : "Não foi possível excluir o item.",
     }
   }
-}
-
-export async function submitSupportAction() {
-  return { ok: true }
 }
 
 async function loanTransitionAction(id: string, action: string) {

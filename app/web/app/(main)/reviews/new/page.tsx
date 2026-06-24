@@ -4,7 +4,12 @@ import { ChevronLeft } from "lucide-react"
 import { getLoans } from "@/lib/api"
 import { ReviewForm } from "@/components/forms/review-form"
 
-export default async function NewReviewPage() {
+export default async function NewReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ loan?: string }>
+}) {
+  const { loan } = await searchParams
   const loans = await getLoans()
 
   return (
@@ -19,7 +24,7 @@ export default async function NewReviewPage() {
         </Link>
         <p className="text-base font-semibold text-[#182034]">Avaliar empréstimo</p>
       </div>
-      <ReviewForm loans={loans} />
+      <ReviewForm loans={loans} preselectedLoanId={loan} />
     </div>
   )
 }

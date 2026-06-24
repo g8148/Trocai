@@ -11,7 +11,6 @@ const PROTECTED_PREFIXES = [
   "/account",
   "/chat",
   "/items",
-  "/support",
   "/reports",
   "/reviews",
 ]

@@ -38,12 +38,23 @@ function StarRating({
   )
 }
 
-export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
+export function ReviewForm({
+  loans,
+  preselectedLoanId,
+}: {
+  loans: LoanEntry[]
+  preselectedLoanId?: string
+}) {
   const reviewableLoans = useMemo(
     () => loans.filter((loan) => loan.status === "returned"),
     [loans]
   )
-  const [selectedLoan, setSelectedLoan] = useState(reviewableLoans[0]?.id ?? "")
+  const [selectedLoan, setSelectedLoan] = useState(
+    preselectedLoanId &&
+      reviewableLoans.some((loan) => loan.id === preselectedLoanId)
+      ? preselectedLoanId
+      : reviewableLoans[0]?.id ?? ""
+  )
   const [itemRating, setItemRating] = useState(4)
   const [userRating, setUserRating] = useState(4)
   const [description, setDescription] = useState("")
@@ -99,10 +110,6 @@ export function ReviewForm({ loans }: { loans: LoanEntry[] }) {
             onChange={(event) => setDescription(event.target.value)}
             className="min-h-[180px] w-full rounded-[24px] border border-black/10 px-4 py-3 text-base outline-none"
           />
-        </div>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#182034]">Foto</label>
-          <div className="h-[150px] rounded-[24px] bg-[linear-gradient(145deg,#f4f5f7_0%,#eceeef_38%,#ffffff_100%)]" />
         </div>
         {error ? <p className="text-sm text-red-500">{error}</p> : null}
         <Button

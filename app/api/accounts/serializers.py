@@ -7,6 +7,8 @@ from .models import User
 class UserDetailSerializer(serializers.ModelSerializer):
     """Serializer para detalhes do usuario (usado pelo dj-rest-auth)."""
 
+    average_rating = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -29,6 +31,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "status",
             "email_verified",
             "phone_verified",
+            "average_rating",
             "created_at",
             "updated_at",
         ]
@@ -36,9 +39,16 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "id",
             "email_verified",
             "phone_verified",
+            "average_rating",
             "created_at",
             "updated_at",
         ]
+
+    def get_average_rating(self, obj):
+        reviews = obj.reviews_received.all()
+        if not reviews.exists():
+            return None
+        return round(sum(r.user_rating for r in reviews) / reviews.count(), 1)
 
 
 class CustomRegisterSerializer(RegisterSerializer):

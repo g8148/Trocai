@@ -1,26 +1,29 @@
 import Link from "next/link"
 import { MessageCircle } from "lucide-react"
 
-import { getConversations } from "@/lib/api"
+import { getConversations, getMe } from "@/lib/api"
 
 const MOCK_CONVERSATIONS = [
-  { id: "mock-joao", name: "Joao", preview: "Ah, otimo! Esclareceu minhas duvidas." },
-  { id: "mock-miguel", name: "Miguel", preview: "Aguardo retorno!" },
-  { id: "mock-alice", name: "Alice", preview: "Obrigada, acredito que va servir para o meu projeto!" },
-  { id: "mock-jose", name: "Jose", preview: "Estamos combinados!" },
+  { id: "mock-joao", name: "Joao", avatar: null, preview: "Ah, otimo! Esclareceu minhas duvidas." },
+  { id: "mock-miguel", name: "Miguel", avatar: null, preview: "Aguardo retorno!" },
+  { id: "mock-alice", name: "Alice", avatar: null, preview: "Obrigada, acredito que va servir para o meu projeto!" },
+  { id: "mock-jose", name: "Jose", avatar: null, preview: "Estamos combinados!" },
 ]
 
 export default async function ChatPage() {
-  const conversations = await getConversations()
+  const [conversations, me] = await Promise.all([getConversations(), getMe()])
   const list = conversations.length
-    ? conversations.map((conversation) => ({
-        id: conversation.id,
-        name:
-          conversation.participants.find((p) => p.first_name)?.first_name ||
-          conversation.participants.find((p) => p.username)?.username ||
-          "Usuário",
-        preview: conversation.last_message?.content || "Conversa iniciada",
-      }))
+    ? conversations.map((conversation) => {
+        const other =
+          conversation.participants.find((p) => p.id !== me?.id) ??
+          conversation.participants[0]
+        return {
+          id: conversation.id,
+          name: other?.first_name || other?.username || "Usuário",
+          avatar: other?.avatar ?? null,
+          preview: conversation.last_message?.content || "Conversa iniciada",
+        }
+      })
     : MOCK_CONVERSATIONS
 
   return (
@@ -45,8 +48,18 @@ export default async function ChatPage() {
               href={`/chat/${conversation.id}`}
               className="flex gap-4 px-4 py-4 transition hover:bg-black/3"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e8ecf2] text-[#182034]">
-                <span className="text-base font-semibold">{conversation.name.slice(0, 1).toUpperCase()}</span>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e8ecf2] text-[#182034]">
+                {conversation.avatar ? (
+                  <img
+                    src={conversation.avatar}
+                    alt={conversation.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-base font-semibold">
+                    {conversation.name.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-[#182034]">{conversation.name}</p>

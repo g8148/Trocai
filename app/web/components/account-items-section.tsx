@@ -1,7 +1,6 @@
 import type { CategoryGroup, ItemSummary } from "@/lib/api"
-import { AccountItemControls } from "@/components/account-item-controls"
+import { AccountItemCard } from "@/components/account-item-card"
 import { ItemDialogButton } from "@/components/item-dialog-button"
-import { ItemCard } from "@/components/item-card"
 
 export function AccountItemsSection({
   items,
@@ -34,10 +33,11 @@ export function AccountItemsSection({
       {items.length > 0 ? (
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="space-y-2">
-              <AccountItemControls item={item} categories={categories} />
-              <ItemCard item={item} href={`/items/${item.id}`} />
-            </div>
+            <AccountItemCard
+              key={item.id}
+              item={item}
+              categories={categories}
+            />
           ))}
         </div>
       ) : (

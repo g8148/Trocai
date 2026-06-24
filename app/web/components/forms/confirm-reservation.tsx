@@ -36,7 +36,7 @@ export function ConfirmReservation({
     <div className="px-4 pt-2 lg:px-0">
       <div className="mx-auto w-full max-w-md rounded-2xl border border-black/7 bg-white p-6 shadow-[0_14px_32px_rgba(17,24,39,0.06)]">
         <h2 className="text-lg font-semibold tracking-tight text-[#111]">
-          Confirme sua solicitação
+          Confirme sua reserva
         </h2>
         <p className="mt-1 mb-6 text-sm text-[#999]">
           Revise os detalhes antes de enviar ao dono do item.
@@ -102,7 +102,7 @@ export function ConfirmReservation({
           disabled={isPending}
           className="mt-6 h-11 w-full rounded-lg bg-[#2fb1c2] text-sm font-medium text-white transition-colors hover:bg-[#26a0b0] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isPending ? "Enviando..." : "Solicitar empréstimo"}
+          {isPending ? "Enviando..." : "Reservar"}
         </button>
       </div>
     </div>

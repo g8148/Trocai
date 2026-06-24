@@ -28,8 +28,16 @@ export function DesktopUserMenu({ user }: { user: AppUser | null }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 w-9 rounded-full p-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f7f9]">
-            <UserRound size={18} className="text-[#2fb1c2]" />
+          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#e8f7f9]">
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.first_name || user.username}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserRound size={18} className="text-[#2fb1c2]" />
+            )}
           </div>
         </Button>
       </DropdownMenuTrigger>

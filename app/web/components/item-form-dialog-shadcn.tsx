@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, useStore } from "@tanstack/react-form"
-import { ImagePlus, Plus, Trash2 } from "lucide-react"
 import * as z from "zod"
 
 import { createItemAction, updateItemAction } from "@/lib/app-actions"
@@ -37,6 +36,7 @@ import { Input } from "@/components/ui/input"
 import {
   InputGroup,
   InputGroupAddon,
+  InputGroupInput,
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group"
@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { ItemImageUploader } from "@/components/item-image-uploader"
 
 type ItemType = "tool" | "service"
 
@@ -62,13 +63,6 @@ type ItemFormValues = {
   estimatedValue: string
   allow_reservation: boolean
   image_urls: string[]
-}
-
-type DemoImageOption = {
-  path: string
-  label: string
-  type: ItemType
-  keywords: string[]
 }
 
 const ITEM_TYPE_OPTIONS: Array<{ value: ItemType; label: string }> = [
@@ -88,51 +82,6 @@ const SEGREGATION_OPTIONS = [
   { value: "semi_professional", label: "Semi-profissional" },
   { value: "professional", label: "Profissional" },
 ] as const
-
-const DEMO_IMAGE_OPTIONS: DemoImageOption[] = [
-  {
-    path: "/demo-items/furadeira-bosch-usada.png",
-    label: "Furadeira usada",
-    type: "tool",
-    keywords: ["furadeira", "parafusadeira", "bosch"],
-  },
-  {
-    path: "/demo-items/chave-fenda-usada.png",
-    label: "Chave de fenda",
-    type: "tool",
-    keywords: ["chave", "fenda", "phillips", "philips"],
-  },
-  {
-    path: "/demo-items/martelo-usado.png",
-    label: "Martelo usado",
-    type: "tool",
-    keywords: ["martelo"],
-  },
-  {
-    path: "/demo-items/marreta-demolicao-usada.png",
-    label: "Marreta de demolição",
-    type: "tool",
-    keywords: ["marreta", "demolidor", "martelete"],
-  },
-  {
-    path: "/demo-items/esmerilhadeira-usada.png",
-    label: "Esmerilhadeira",
-    type: "tool",
-    keywords: ["esmerilhadeira"],
-  },
-  {
-    path: "/demo-items/escada-extensivel-usada.png",
-    label: "Escada extensível",
-    type: "tool",
-    keywords: ["escada", "andaime", "altura"],
-  },
-  {
-    path: "/demo-items/pintura-residencial.png",
-    label: "Serviço residencial",
-    type: "service",
-    keywords: ["pintura", "serviço", "instalação", "hidráulica", "doméstico"],
-  },
-]
 
 const itemFormSchema = z.object({
   type: z.enum(["tool", "service"]),
@@ -164,7 +113,9 @@ function getInitialCategoryId(
 
   return (
     categories.find((category) =>
-      category.subcategories.some((subcategory) => subcategory.id === subcategoryId)
+      category.subcategories.some(
+        (subcategory) => subcategory.id === subcategoryId
+      )
     )?.id ?? ""
   )
 }
@@ -203,13 +154,6 @@ function getAbsoluteImageUrl(value: string) {
   return new URL(value, window.location.origin).toString()
 }
 
-function getSuggestionScore(option: DemoImageOption, haystack: string) {
-  return option.keywords.reduce(
-    (total, keyword) => total + (haystack.includes(keyword) ? 3 : 0),
-    0
-  )
-}
-
 function getInitialValues(
   categories: CategoryGroup[],
   item?: ItemSummary
@@ -237,6 +181,24 @@ function shouldShowFieldError(
   submissionAttempts: number
 ) {
   return (meta.isTouched || submissionAttempts > 0) && meta.errors.length > 0
+}
+
+// O FieldError do shadcn espera Array<{ message?: string }>, mas o TanStack Form
+// entrega os erros como string (ou objeto com .message). Normaliza para o formato
+// que o componente consome.
+function normalizeFieldErrors(errors: unknown[]): Array<{ message?: string }> {
+  return errors.flatMap((error) => {
+    if (typeof error === "string") {
+      return [{ message: error }]
+    }
+    if (error && typeof error === "object" && "message" in error) {
+      const message = (error as { message?: unknown }).message
+      if (typeof message === "string") {
+        return [{ message }]
+      }
+    }
+    return []
+  })
 }
 
 interface ItemFormDialogShadcnProps {
@@ -304,58 +266,35 @@ export function ItemFormDialogShadcn({
     },
   })
 
-  const formState = useStore(form.store, (state) => ({
-    values: state.values,
-    isDirty: state.isDirty,
-    isSubmitting: Boolean(state.isSubmitting),
-    submissionAttempts: state.submissionAttempts,
-  }))
+  // Assinaturas granulares: o pai so re-renderiza quando esses primitivos mudam
+  // (selecao de tipo/categoria/subcategoria e tentativas de submit), nunca a
+  // cada tecla. Campos "quentes" (nome, descricao, valor) ficam isolados nos
+  // proprios form.Field/form.Subscribe.
+  const typeValue = useStore(form.store, (state) => state.values.type)
+  const categoryIdValue = useStore(
+    form.store,
+    (state) => state.values.categoryId
+  )
+  const subcategoryValue = useStore(
+    form.store,
+    (state) => state.values.subcategory
+  )
+  const submissionAttempts = useStore(
+    form.store,
+    (state) => state.submissionAttempts
+  )
 
   const filteredCategories = useMemo(
-    () => categories.filter((category) => category.type === formState.values.type),
-    [categories, formState.values.type]
+    () => categories.filter((category) => category.type === typeValue),
+    [categories, typeValue]
   )
 
   const selectedCategory = useMemo(
     () =>
-      filteredCategories.find(
-        (category) => category.id === formState.values.categoryId
-      ) ?? null,
-    [filteredCategories, formState.values.categoryId]
+      filteredCategories.find((category) => category.id === categoryIdValue) ??
+      null,
+    [filteredCategories, categoryIdValue]
   )
-
-  const selectedSubcategory = useMemo(
-    () =>
-      selectedCategory?.subcategories.find(
-        (subcategory) => subcategory.id === formState.values.subcategory
-      ) ?? null,
-    [selectedCategory, formState.values.subcategory]
-  )
-
-  const imageSuggestions = useMemo(() => {
-    const haystack = [
-      formState.values.name,
-      selectedCategory?.name ?? "",
-      selectedSubcategory?.name ?? "",
-      formState.values.type,
-    ]
-      .join(" ")
-      .toLowerCase()
-
-    return DEMO_IMAGE_OPTIONS
-      .filter((option) => option.type === formState.values.type)
-      .map((option) => ({
-        ...option,
-        score: getSuggestionScore(option, haystack),
-      }))
-      .sort((left, right) => right.score - left.score)
-      .slice(0, formState.values.type === "service" ? 1 : 3)
-  }, [
-    formState.values.name,
-    formState.values.type,
-    selectedCategory?.name,
-    selectedSubcategory?.name,
-  ])
 
   useEffect(() => {
     if (!open) {
@@ -369,40 +308,40 @@ export function ItemFormDialogShadcn({
 
   useEffect(() => {
     if (
-      formState.values.categoryId &&
-      !filteredCategories.some((category) => category.id === formState.values.categoryId)
+      categoryIdValue &&
+      !filteredCategories.some((category) => category.id === categoryIdValue)
     ) {
       form.setFieldValue("categoryId", "")
       form.setFieldValue("subcategory", "")
     }
-  }, [filteredCategories, form, formState.values.categoryId])
+  }, [filteredCategories, form, categoryIdValue])
 
   useEffect(() => {
     if (!selectedCategory) {
-      if (formState.values.subcategory) {
+      if (subcategoryValue) {
         form.setFieldValue("subcategory", "")
       }
       return
     }
 
     if (
-      formState.values.subcategory &&
+      subcategoryValue &&
       selectedCategory.subcategories.some(
-        (subcategory) => subcategory.id === formState.values.subcategory
+        (subcategory) => subcategory.id === subcategoryValue
       )
     ) {
       return
     }
 
     form.setFieldValue("subcategory", "")
-  }, [form, formState.values.subcategory, selectedCategory])
+  }, [form, subcategoryValue, selectedCategory])
 
   const requestClose = () => {
-    if (formState.isSubmitting) {
+    if (form.state.isSubmitting) {
       return
     }
 
-    if (formState.isDirty) {
+    if (form.state.isDirty) {
       setDiscardDialogOpen(true)
       return
     }
@@ -433,7 +372,9 @@ export function ItemFormDialogShadcn({
         <DialogContent className="max-w-3xl overflow-hidden p-0 sm:max-w-3xl">
           <div className="flex max-h-[85vh] flex-col">
             <DialogHeader className="border-b px-6 py-4 text-left">
-              <DialogTitle>{item ? "Editar item" : "Adicionar item"}</DialogTitle>
+              <DialogTitle>
+                {item ? "Editar item" : "Adicionar item"}
+              </DialogTitle>
               <DialogDescription>
                 {item
                   ? "Atualize as informações e publique as mudanças sem sair da página."
@@ -456,7 +397,8 @@ export function ItemFormDialogShadcn({
                       <Field>
                         <FieldLabel>Tipo do item</FieldLabel>
                         <FieldDescription>
-                          Escolha se este cadastro representa uma ferramenta ou um serviço.
+                          Escolha se este cadastro representa uma ferramenta ou
+                          um serviço.
                         </FieldDescription>
                         <div className="flex flex-wrap items-center gap-2">
                           {ITEM_TYPE_OPTIONS.map((option) => {
@@ -491,12 +433,14 @@ export function ItemFormDialogShadcn({
                       {(field) => {
                         const isInvalid = shouldShowFieldError(
                           field.state.meta,
-                          formState.submissionAttempts
+                          submissionAttempts
                         )
 
                         return (
                           <Field data-invalid={isInvalid}>
-                            <FieldLabel htmlFor="item-category">Categoria</FieldLabel>
+                            <FieldLabel htmlFor="item-category">
+                              Categoria
+                            </FieldLabel>
                             <Select
                               value={field.state.value || undefined}
                               onValueChange={(value) => {
@@ -513,17 +457,24 @@ export function ItemFormDialogShadcn({
                               </SelectTrigger>
                               <SelectContent>
                                 {filteredCategories.map((category) => (
-                                  <SelectItem key={category.id} value={category.id}>
+                                  <SelectItem
+                                    key={category.id}
+                                    value={category.id}
+                                  >
                                     {category.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                             <FieldDescription>
-                              Define o grupo principal em que o item sera exibido.
+                              Define o grupo principal onde o item será exibido.
                             </FieldDescription>
                             {isInvalid ? (
-                              <FieldError errors={field.state.meta.errors} />
+                              <FieldError
+                                errors={normalizeFieldErrors(
+                                  field.state.meta.errors
+                                )}
+                              />
                             ) : null}
                           </Field>
                         )
@@ -540,7 +491,7 @@ export function ItemFormDialogShadcn({
                       {(field) => {
                         const isInvalid = shouldShowFieldError(
                           field.state.meta,
-                          formState.submissionAttempts
+                          submissionAttempts
                         )
 
                         return (
@@ -567,23 +518,29 @@ export function ItemFormDialogShadcn({
                                 />
                               </SelectTrigger>
                               <SelectContent>
-                                {selectedCategory?.subcategories.map((subcategory) => (
-                                  <SelectItem
-                                    key={subcategory.id}
-                                    value={subcategory.id}
-                                  >
-                                    {subcategory.name}
-                                  </SelectItem>
-                                ))}
+                                {selectedCategory?.subcategories.map(
+                                  (subcategory) => (
+                                    <SelectItem
+                                      key={subcategory.id}
+                                      value={subcategory.id}
+                                    >
+                                      {subcategory.name}
+                                    </SelectItem>
+                                  )
+                                )}
                               </SelectContent>
                             </Select>
                             <FieldDescription>
                               {selectedCategory
                                 ? "Escolha a opção mais próxima do item ou serviço."
-                                : "A lista e liberada depois que voce seleciona a categoria."}
+                                : "A lista é liberada depois que você seleciona a categoria."}
                             </FieldDescription>
                             {isInvalid ? (
-                              <FieldError errors={field.state.meta.errors} />
+                              <FieldError
+                                errors={normalizeFieldErrors(
+                                  field.state.meta.errors
+                                )}
+                              />
                             ) : null}
                           </Field>
                         )
@@ -609,7 +566,7 @@ export function ItemFormDialogShadcn({
                     {(field) => {
                       const isInvalid = shouldShowFieldError(
                         field.state.meta,
-                        formState.submissionAttempts
+                        submissionAttempts
                       )
 
                       return (
@@ -620,20 +577,27 @@ export function ItemFormDialogShadcn({
                             name={field.name}
                             value={field.state.value}
                             onBlur={field.handleBlur}
-                            onChange={(event) => field.handleChange(event.target.value)}
+                            onChange={(event) =>
+                              field.handleChange(event.target.value)
+                            }
                             aria-invalid={isInvalid}
                             placeholder={
-                              formState.values.type === "service"
+                              typeValue === "service"
                                 ? "Ex.: Pintura residencial"
                                 : "Ex.: Furadeira de impacto"
                             }
                             className="h-10"
                           />
                           <FieldDescription>
-                            Use um nome claro para o anuncio aparecer melhor na busca.
+                            Use um nome claro para o anúncio aparecer melhor na
+                            busca.
                           </FieldDescription>
                           {isInvalid ? (
-                            <FieldError errors={field.state.meta.errors} />
+                            <FieldError
+                              errors={normalizeFieldErrors(
+                                field.state.meta.errors
+                              )}
+                            />
                           ) : null}
                         </Field>
                       )
@@ -646,7 +610,7 @@ export function ItemFormDialogShadcn({
                       onBlur: ({ value }) => {
                         const trimmed = value.trim()
                         if (!trimmed) {
-                          return "Informe a descricao do item."
+                          return "Informe a descrição do item."
                         }
                         if (trimmed.length < 10) {
                           return "Descreva melhor o item com pelo menos 10 caracteres."
@@ -658,19 +622,23 @@ export function ItemFormDialogShadcn({
                     {(field) => {
                       const isInvalid = shouldShowFieldError(
                         field.state.meta,
-                        formState.submissionAttempts
+                        submissionAttempts
                       )
 
                       return (
                         <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor="item-description">Descricao</FieldLabel>
+                          <FieldLabel htmlFor="item-description">
+                            Descrição
+                          </FieldLabel>
                           <InputGroup>
                             <InputGroupTextarea
                               id="item-description"
                               name={field.name}
                               value={field.state.value}
                               onBlur={field.handleBlur}
-                              onChange={(event) => field.handleChange(event.target.value)}
+                              onChange={(event) =>
+                                field.handleChange(event.target.value)
+                              }
                               placeholder="Descreva o estado, a forma de uso e os detalhes importantes."
                               rows={6}
                               className="resize-none"
@@ -683,10 +651,15 @@ export function ItemFormDialogShadcn({
                             </InputGroupAddon>
                           </InputGroup>
                           <FieldDescription>
-                            Inclua estado de conservacao, contexto de uso e o que acompanha o item.
+                            Inclua o estado de conservação, o contexto de uso e
+                            o que acompanha o item.
                           </FieldDescription>
                           {isInvalid ? (
-                            <FieldError errors={field.state.meta.errors} />
+                            <FieldError
+                              errors={normalizeFieldErrors(
+                                field.state.meta.errors
+                              )}
+                            />
                           ) : null}
                         </Field>
                       )
@@ -697,24 +670,32 @@ export function ItemFormDialogShadcn({
                     <form.Field name="condition">
                       {(field) => (
                         <Field>
-                          <FieldLabel htmlFor="item-condition">Condicao</FieldLabel>
+                          <FieldLabel htmlFor="item-condition">
+                            Condição
+                          </FieldLabel>
                           <Select
                             value={field.state.value}
                             onValueChange={field.handleChange}
                           >
-                            <SelectTrigger id="item-condition" className="h-10 w-full">
+                            <SelectTrigger
+                              id="item-condition"
+                              className="h-10 w-full"
+                            >
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent>
                               {CONDITION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           <FieldDescription>
-                            Ajuda o usuario a entender o estado real do item.
+                            Indica o estado físico de conservação do item.
                           </FieldDescription>
                         </Field>
                       )}
@@ -738,14 +719,18 @@ export function ItemFormDialogShadcn({
                             </SelectTrigger>
                             <SelectContent>
                               {SEGREGATION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           <FieldDescription>
-                            Mostra o nivel de exigencia ou robustez do item.
+                            Indica se o item é de uso amador, semi-profissional
+                            ou profissional.
                           </FieldDescription>
                         </Field>
                       )}
@@ -757,22 +742,30 @@ export function ItemFormDialogShadcn({
                       {(field) => (
                         <Field>
                           <FieldLabel htmlFor="item-estimated-value">
-                            Valor estimado
+                            Valor estimado{" "}
+                            <span className="font-normal text-muted-foreground">
+                              (opcional)
+                            </span>
                           </FieldLabel>
-                          <Input
-                            id="item-estimated-value"
-                            inputMode="numeric"
-                            value={field.state.value}
-                            onChange={(event) =>
-                              field.handleChange(
-                                formatCurrencyMask(event.target.value)
-                              )
-                            }
-                            placeholder="0,00"
-                            className="h-10"
-                          />
+                          <InputGroup className="h-10">
+                            <InputGroupAddon>
+                              <InputGroupText>R$</InputGroupText>
+                            </InputGroupAddon>
+                            <InputGroupInput
+                              id="item-estimated-value"
+                              inputMode="numeric"
+                              value={field.state.value}
+                              onChange={(event) =>
+                                field.handleChange(
+                                  formatCurrencyMask(event.target.value)
+                                )
+                              }
+                              placeholder="0,00"
+                            />
+                          </InputGroup>
                           <FieldDescription>
-                            O valor e formatado automaticamente enquanto voce digita.
+                            Uma referência de quanto vale o item. Pode deixar em
+                            branco.
                           </FieldDescription>
                         </Field>
                       )}
@@ -781,14 +774,16 @@ export function ItemFormDialogShadcn({
                     <form.Field name="allow_reservation">
                       {(field) => (
                         <Field>
-                          <FieldLabel htmlFor="item-reservation">Reservas</FieldLabel>
+                          <FieldLabel htmlFor="item-reservation">
+                            Reservas
+                          </FieldLabel>
                           <div className="flex items-center justify-between rounded-lg border border-input bg-background px-3 py-2.5">
                             <div className="space-y-1">
                               <p className="text-sm font-medium text-foreground">
                                 Permitir reservas
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                Depois voce pode pausar isso em Meus itens.
+                                Depois você pode pausar isso em Meus itens.
                               </p>
                             </div>
                             <Switch
@@ -807,111 +802,13 @@ export function ItemFormDialogShadcn({
                       <Field>
                         <FieldLabel>Imagens</FieldLabel>
                         <FieldDescription>
-                          Enquanto o upload nao entra, voce pode colar links ou usar as sugestoes abaixo.
+                          Envie fotos do item. A primeira imagem vira a capa do
+                          anúncio.
                         </FieldDescription>
-
-                        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background text-muted-foreground">
-                              <ImagePlus className="h-4 w-4" />
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-foreground">
-                                Upload em preparacao
-                              </p>
-                              <p className="text-xs leading-5 text-muted-foreground">
-                                Escolha uma foto de apoio para acelerar o cadastro ate a rota de upload ficar pronta.
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {imageSuggestions.map((suggestion) => (
-                                  <Button
-                                    key={suggestion.path}
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const nextValues = [...field.state.value]
-                                      const emptyIndex = nextValues.findIndex(
-                                        (url) => !url.trim()
-                                      )
-                                      const absoluteUrl = getAbsoluteImageUrl(
-                                        suggestion.path
-                                      )
-
-                                      if (emptyIndex >= 0) {
-                                        nextValues[emptyIndex] = absoluteUrl
-                                      } else {
-                                        nextValues.unshift(absoluteUrl)
-                                      }
-
-                                      field.handleChange(Array.from(new Set(nextValues)))
-                                    }}
-                                  >
-                                    {suggestion.label}
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          {field.state.value.map((imageUrl, index) => (
-                            <div
-                              key={`${index}-${imageUrl}`}
-                              className="rounded-lg border border-border bg-background p-3"
-                            >
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  value={imageUrl}
-                                  onChange={(event) => {
-                                    const nextValues = [...field.state.value]
-                                    nextValues[index] = event.target.value
-                                    field.handleChange(nextValues)
-                                  }}
-                                  placeholder="https://exemplo.com/foto.jpg"
-                                  className="h-10"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => {
-                                    const nextValues = field.state.value.filter(
-                                      (_, currentIndex) => currentIndex !== index
-                                    )
-                                    field.handleChange(
-                                      nextValues.length ? nextValues : [""]
-                                    )
-                                  }}
-                                  aria-label="Remover imagem"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              {imageUrl.trim() ? (
-                                <img
-                                  src={getAbsoluteImageUrl(imageUrl)}
-                                  alt={`Imagem ${index + 1}`}
-                                  className="mt-3 h-32 w-full rounded-md object-cover"
-                                />
-                              ) : null}
-                            </div>
-                          ))}
-
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              field.handleChange([...field.state.value, ""])
-                            }
-                          >
-                            <Plus className="h-4 w-4" />
-                            Adicionar link
-                          </Button>
-                        </div>
+                        <ItemImageUploader
+                          value={field.state.value}
+                          onChange={field.handleChange}
+                        />
                       </Field>
                     )}
                   </form.Field>
@@ -925,23 +822,27 @@ export function ItemFormDialogShadcn({
               </div>
 
               <div className="sticky bottom-0 border-t bg-background px-6 py-4">
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={requestClose}
-                    disabled={formState.isSubmitting}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={formState.isSubmitting}>
-                    {formState.isSubmitting
-                      ? "Salvando..."
-                      : item
-                        ? "Salvar alteracoes"
-                        : "Salvar item"}
-                  </Button>
-                </div>
+                <form.Subscribe selector={(state) => state.isSubmitting}>
+                  {(isSubmitting) => (
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={requestClose}
+                        disabled={isSubmitting}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting
+                          ? "Salvando..."
+                          : item
+                            ? "Salvar alterações"
+                            : "Salvar item"}
+                      </Button>
+                    </div>
+                  )}
+                </form.Subscribe>
               </div>
             </form>
           </div>
@@ -951,9 +852,10 @@ export function ItemFormDialogShadcn({
       <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Descartar alteracoes?</AlertDialogTitle>
+            <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ha mudancas nao salvas neste formulario. Se voce sair agora, elas serao perdidas.
+              Há mudanças não salvas neste formulário. Se você sair agora, elas
+              serão perdidas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -18,8 +18,8 @@ export function Footer() {
           <Link href="/search" className="transition-colors hover:text-foreground">
             Explorar
           </Link>
-          <Link href="/support" className="transition-colors hover:text-foreground">
-            Suporte
+          <Link href="/contato" className="transition-colors hover:text-foreground">
+            Contato
           </Link>
         </nav>
 

@@ -16,6 +16,26 @@ class ReviewListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Review.objects.filter(is_deleted=False)
 
+    def get_queryset(self):
+        queryset = Review.objects.filter(is_deleted=False).select_related(
+            "reviewer", "reviewed_user", "loan", "loan__item"
+        )
+        params = self.request.query_params
+        item_id = params.get("item")
+        reviewed_user = params.get("reviewed_user")
+        reviewer = params.get("reviewer")
+
+        if item_id:
+            queryset = queryset.filter(loan__item_id=item_id)
+        if reviewed_user:
+            queryset = queryset.filter(reviewed_user_id=reviewed_user)
+        if reviewer == "me" and self.request.user.is_authenticated:
+            queryset = queryset.filter(reviewer=self.request.user)
+        elif reviewer:
+            queryset = queryset.filter(reviewer_id=reviewer)
+
+        return queryset.order_by("-created_at")
+
     def perform_create(self, serializer):
         loan = serializer.validated_data["loan"]
         reviewer = self.request.user
@@ -29,7 +49,6 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         if Review.objects.filter(
             loan=loan,
             reviewer=reviewer,
-            is_deleted=False,
         ).exists():
             raise ValidationError("Voce ja avaliou este emprestimo.")
 

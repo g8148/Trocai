@@ -48,6 +48,8 @@ class ItemSerializer(serializers.ModelSerializer):
         source="subcategory.category.type", read_only=True
     )
     cover_image = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
@@ -68,6 +70,8 @@ class ItemSerializer(serializers.ModelSerializer):
             "is_active",
             "times_borrowed",
             "cover_image",
+            "average_rating",
+            "review_count",
             "images",
             "image_urls",
             "created_at",
@@ -90,6 +94,13 @@ class ItemSerializer(serializers.ModelSerializer):
 
         first_image = next(iter(obj.images.all()), None)
         return first_image.image if first_image else None
+
+    def get_average_rating(self, obj):
+        value = getattr(obj, "avg_item_rating", None)
+        return round(value, 1) if value is not None else None
+
+    def get_review_count(self, obj):
+        return getattr(obj, "num_reviews", 0)
 
     def _sync_images(self, item, image_urls):
         ItemImage.objects.filter(item=item).delete()
@@ -122,3 +133,14 @@ class ItemSerializer(serializers.ModelSerializer):
             self._sync_images(instance, image_urls)
 
         return instance
+
+
+class ImageUploadSerializer(serializers.Serializer):
+    file = serializers.ImageField()
+
+    def validate_file(self, file):
+        if not file.content_type.startswith("image/"):
+            raise serializers.ValidationError("Envie apenas imagens.")
+        if file.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Imagem deve ter no maximo 5MB.")
+        return file

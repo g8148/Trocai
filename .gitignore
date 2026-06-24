@@ -5,3 +5,9 @@ docs
 
 # Config local do MCP (arquivo não pode ser removido)
 .mcp.json
+
+# Artefatos locais do Playwright MCP
+.playwright-mcp/
+
+# Dumps de schema do banco (gerados localmente)
+trocai_schema_*.sql
