@@ -17,7 +17,7 @@ type LoginResponse = {
   user: AuthUser
 }
 
-type FieldErrors = Record<string, string[]>
+type FieldErrors = Record<string, string[] | string>
 
 async function setAuthCookies(access: string, refresh: string, user: AuthUser) {
   const store = await cookies()
@@ -116,7 +116,6 @@ export async function loginAction(data: {
 export async function registerAction(data: {
   first_name: string
   last_name: string
-  username: string
   email: string
   cpf: string
   phone?: string

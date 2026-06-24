@@ -43,17 +43,25 @@ const INITIAL_VALUES: RegisterValues = {
 const API_TO_FIELD: Record<string, keyof RegisterValues> = {
   first_name: "fullName",
   last_name: "fullName",
-  username: "fullName",
   email: "email",
   cpf: "cpf",
   phone: "phone",
   password1: "password",
   password2: "password",
+  password: "password",
   zip_code: "zip_code",
   street: "street",
   neighborhood: "neighborhood",
   city: "city",
   state: "state",
+}
+
+// Rótulos amigáveis para chaves de erro que não têm um campo no formulário,
+// usados para montar uma mensagem geral explicando o motivo da recusa.
+const API_KEY_LABELS: Record<string, string> = {
+  non_field_errors: "",
+  detail: "",
+  username: "Nome de usuário",
 }
 
 const STEP_1_FIELDS: Array<keyof RegisterValues> = [
@@ -73,13 +81,6 @@ function splitName(fullName: string) {
     first_name: parts[0] ?? "Usuário",
     last_name: parts.slice(1).join(" ") || "Trocai",
   }
-}
-
-function deriveUsername(email: string) {
-  return (
-    email.split("@")[0]?.replace(/[^a-zA-Z0-9._-]/g, "") ||
-    `usuario${Date.now()}`
-  )
 }
 
 function maskCpf(value: string) {
@@ -121,8 +122,8 @@ function validateStepOne(values: RegisterValues): FieldErrors {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
     errors.email = "Informe um e-mail válido."
   }
-  if (values.password.length < 8) {
-    errors.password = "A senha precisa de pelo menos 8 caracteres."
+  if (values.password.length < 6) {
+    errors.password = "A senha precisa de pelo menos 6 caracteres."
   }
 
   return errors
@@ -286,20 +287,39 @@ export function RegisterFlow() {
     setStep(2)
   }
 
-  function applyApiErrors(fieldErrors: Record<string, string[]>) {
+  // Retorna a mensagem geral montada (ou null), para o chamador decidir o texto.
+  function applyApiErrors(fieldErrors: Record<string, string[] | string>): string | null {
     const mapped: FieldErrors = {}
+    const generalMessages: string[] = []
     let hasStepOneError = false
 
-    for (const [apiKey, messages] of Object.entries(fieldErrors)) {
+    for (const [apiKey, raw] of Object.entries(fieldErrors)) {
+      const message = Array.isArray(raw) ? raw[0] : raw
+      if (!message) continue
+
       const field = API_TO_FIELD[apiKey]
-      const message = messages?.[0]
-      if (!field || !message) continue
-      mapped[field] = message
-      if (STEP_1_FIELDS.includes(field)) hasStepOneError = true
+      if (field) {
+        mapped[field] = message
+        if (STEP_1_FIELDS.includes(field)) hasStepOneError = true
+        continue
+      }
+
+      // Erro sem campo correspondente no formulário: vira mensagem geral,
+      // assim o usuário sempre vê o motivo real da recusa.
+      const label = API_KEY_LABELS[apiKey]
+      generalMessages.push(label ? `${label}: ${message}` : message)
     }
 
     setErrors(mapped)
     if (hasStepOneError) setStep(1)
+
+    if (generalMessages.length > 0) {
+      return generalMessages.join(" ")
+    }
+    if (Object.keys(mapped).length === 0) {
+      return "Não foi possível concluir o cadastro. Tente novamente."
+    }
+    return null
   }
 
   async function handleSubmit() {
@@ -317,7 +337,6 @@ export function RegisterFlow() {
     const result = await registerAction({
       first_name,
       last_name,
-      username: deriveUsername(values.email),
       email: values.email,
       cpf: values.cpf,
       phone: values.phone,
@@ -333,8 +352,8 @@ export function RegisterFlow() {
     setIsSubmitting(false)
 
     if (result.fieldErrors) {
-      applyApiErrors(result.fieldErrors)
-      setFormError("Revise os campos destacados e tente de novo.")
+      const general = applyApiErrors(result.fieldErrors)
+      setFormError(general ?? "Revise os campos destacados e tente de novo.")
       return
     }
 

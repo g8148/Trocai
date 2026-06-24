@@ -31,6 +31,57 @@ class AccountsTests(APITestCase):
         response = self.client.post(self.register_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_register_same_email_prefix_generates_unique_usernames(self):
+        # Dois emails com o mesmo prefixo nao podem colidir no username
+        # (username e gerado pelo backend, com sufixo unico).
+        first = {
+            'email': 'joao@gmail.com',
+            'cpf': '111.222.333-44',
+            'first_name': 'Joao', 'last_name': 'Silva',
+            'password1': 'senha123', 'password2': 'senha123',
+        }
+        second = {
+            'email': 'joao@hotmail.com',
+            'cpf': '555.666.777-88',
+            'first_name': 'Joao', 'last_name': 'Souza',
+            'password1': 'senha123', 'password2': 'senha123',
+        }
+        r1 = self.client.post(self.register_url, first, format='json')
+        r2 = self.client.post(self.register_url, second, format='json')
+        self.assertEqual(r1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(r2.status_code, status.HTTP_201_CREATED)
+        u1 = User.objects.get(email='joao@gmail.com')
+        u2 = User.objects.get(email='joao@hotmail.com')
+        self.assertTrue(u1.username)
+        self.assertNotEqual(u1.username, u2.username)
+
+    def test_register_client_username_is_ignored(self):
+        # Mesmo que o cliente envie um username ja existente, o cadastro
+        # nao deve falhar: o backend gera o seu proprio.
+        data = {
+            'username': 'existing',  # ja existe no setUp, mas deve ser ignorado
+            'email': 'ignora@test.com',
+            'cpf': '999.000.111-22',
+            'first_name': 'Ignora', 'last_name': 'Username',
+            'password1': 'senha123', 'password2': 'senha123',
+        }
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertNotEqual(
+            User.objects.get(email='ignora@test.com').username, 'existing'
+        )
+
+    def test_register_simple_password_returns_201(self):
+        # Senha simples/curta (6 chars, so numeros) deve ser aceita no MVP.
+        data = {
+            'email': 'simples@test.com',
+            'cpf': '222.333.444-55',
+            'first_name': 'Senha', 'last_name': 'Simples',
+            'password1': '123456', 'password2': '123456',
+        }
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
     def test_register_duplicate_cpf_returns_400(self):
         data = {
             'username': 'outro',

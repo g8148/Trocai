@@ -127,19 +127,12 @@ else:
 
 AUTH_USER_MODEL = "accounts.User"
 
+# MVP: senha simples de propósito. Exigimos apenas um tamanho minimo;
+# nada de bloquear senha numerica/comum/parecida com o email.
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "OPTIONS": {"min_length": 6},
     },
 ]
 
@@ -152,10 +145,14 @@ AUTHENTICATION_BACKENDS = [
 # ALLAUTH
 # =============================================================================
 
+# Login por email ou username (username e gerado pelo backend, ver adapter abaixo).
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+# Username NAO e pedido no cadastro: o usuario so informa email e senha.
+# O allauth gera um username unico automaticamente (ver AccountAdapter).
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 
 # =============================================================================
 # DJANGO REST FRAMEWORK

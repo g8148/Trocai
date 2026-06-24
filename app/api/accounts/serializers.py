@@ -66,6 +66,13 @@ class CustomRegisterSerializer(RegisterSerializer):
     city = serializers.CharField(max_length=255, required=False, allow_blank=True)
     state = serializers.CharField(max_length=2, required=False, allow_blank=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # O username e gerado pelo backend (ver AccountAdapter). Removemos o
+        # campo para que nenhum username enviado pelo cliente seja validado nem
+        # gere o confuso erro de "nome de usuario ja existe".
+        self.fields.pop("username", None)
+
     def validate_cpf(self, value):
         from .models import User
         if User.objects.filter(cpf=value).exists():
