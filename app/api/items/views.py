@@ -1,3 +1,4 @@
+import math
 import os
 import uuid
 
@@ -79,6 +80,28 @@ class ItemListCreateView(generics.ListCreateAPIView):
                 | Q(description__icontains=search)
                 | Q(subcategory__name__icontains=search)
                 | Q(subcategory__category__name__icontains=search)
+            )
+
+        user = self.request.user
+        if (
+            user.is_authenticated
+            and user.latitude is not None
+            and user.longitude is not None
+            and not owner_id  # não filtrar por distância se buscando itens de alguém específico
+        ):
+            u_lat = float(user.latitude)
+            u_lon = float(user.longitude)
+            radius = user.search_radius_km
+
+            # Aproximação de caixa delimitadora: 1° lat ≈ 111.32 km
+            lat_delta = radius / 111.32
+            lon_delta = radius / (111.32 * math.cos(math.radians(u_lat)))
+
+            queryset = queryset.filter(
+                owner__latitude__isnull=False,
+                owner__longitude__isnull=False,
+                owner__latitude__range=(u_lat - lat_delta, u_lat + lat_delta),
+                owner__longitude__range=(u_lon - lon_delta, u_lon + lon_delta),
             )
 
         queryset = queryset.annotate(
