@@ -50,6 +50,7 @@ export default function LoginPage() {
             </Label>
             <Input
               id="email"
+              type="text"
               value={login}
               onChange={(e) => setLogin(e.target.value)}
               placeholder="seu@email.com"
@@ -145,8 +146,8 @@ export default function LoginPage() {
 
         <p className="mt-5 text-center text-xs text-[#ccc]">
           Ao continuar você concorda com os{" "}
-          <span className="cursor-pointer underline">Termos</span> e a{" "}
-          <span className="cursor-pointer underline">Privacidade</span>.
+          <Link href="/termos" className="underline hover:text-white transition-colors">Termos</Link> e a{" "}
+          <Link href="/privacidade" className="underline hover:text-white transition-colors">Privacidade</Link>.
         </p>
       </div>
     </div>

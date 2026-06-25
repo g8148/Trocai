@@ -556,8 +556,15 @@ export function RegisterFlow() {
             </div>
 
             <p className="text-xs leading-5 text-[#8a92a3]">
-              Ao criar a conta, você concorda com os Termos de Serviço e a
-              Política de Privacidade.
+              Ao criar a conta, você concorda com os{" "}
+              <a href="/termos" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#182034] transition-colors">
+                Termos de Serviço
+              </a>{" "}
+              e a{" "}
+              <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#182034] transition-colors">
+                Política de Privacidade
+              </a>
+              .
             </p>
 
             {formError ? (

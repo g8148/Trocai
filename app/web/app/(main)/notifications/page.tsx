@@ -3,12 +3,15 @@ import { Bell } from "lucide-react"
 import { getNotifications } from "@/lib/api"
 
 const TYPE_LABELS: Record<string, string> = {
-  solicitacao: "Solicitação",
-  aprovacao: "Aprovação",
-  rejeicao: "Rejeição",
-  lembrete_devolucao: "Devolução",
-  atraso: "Atraso",
-  reserva_disponivel: "Reserva disponível",
+  loan_request: "Solicitação de empréstimo",
+  loan_approved: "Empréstimo aprovado",
+  loan_rejected: "Solicitação recusada",
+  return_reminder: "Devolução",
+  return_overdue: "Devolução em atraso",
+  reservation: "Nova reserva",
+  new_message: "Nova mensagem",
+  review: "Nova avaliação",
+  system: "Sistema",
 }
 
 export default async function NotificationsPage() {

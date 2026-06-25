@@ -47,8 +47,6 @@ class Loan(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     pickup_date = models.DateTimeField(help_text="Data/hora combinada para retirada")
     expected_return_date = models.DateTimeField(
-        null=True,
-        blank=True,
         help_text="Data/hora prevista para devolução",
     )
     actual_return_date = models.DateTimeField(

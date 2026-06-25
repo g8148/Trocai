@@ -20,6 +20,7 @@ export function ForgotPasswordForm() {
             Usuário ou e-mail
           </label>
           <Input
+            type="text"
             value={login}
             onChange={(event) => setLogin(event.target.value)}
             className="h-12 rounded-2xl border-black/10 px-4 text-base"

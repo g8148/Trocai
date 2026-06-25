@@ -3,6 +3,12 @@ from rest_framework import serializers
 
 from .models import User
 
+VALID_STATES = {
+    "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO",
+    "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR",
+    "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
+}
+
 
 class UserDetailSerializer(serializers.ModelSerializer):
     """Serializer para detalhes do usuario (usado pelo dj-rest-auth)."""
@@ -50,6 +56,16 @@ class UserDetailSerializer(serializers.ModelSerializer):
             return None
         return round(sum(r.user_rating for r in reviews) / reviews.count(), 1)
 
+    def validate_avatar(self, value):
+        if value and value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("A imagem deve ter no máximo 5MB.")
+        return value
+
+    def validate_state(self, value):
+        if value and value.upper() not in VALID_STATES:
+            raise serializers.ValidationError("Informe uma sigla de estado brasileira válida (ex: SC, SP, RJ).")
+        return value.upper() if value else value
+
 
 class CustomRegisterSerializer(RegisterSerializer):
     """Serializer customizado para registro com campos extras."""
@@ -78,6 +94,11 @@ class CustomRegisterSerializer(RegisterSerializer):
         if User.objects.filter(cpf=value).exists():
             raise serializers.ValidationError("CPF já cadastrado.")
         return value
+
+    def validate_state(self, value):
+        if value and value.upper() not in VALID_STATES:
+            raise serializers.ValidationError("Informe uma sigla de estado brasileira válida (ex: SC, SP, RJ).")
+        return value.upper() if value else value
 
     def validate_email(self, value):
         from .models import User

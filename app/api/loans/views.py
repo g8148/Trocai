@@ -9,9 +9,21 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from items.models import Item
+from notifications.models import Notification
 
 from .models import Loan
 from .serializers import LoanSerializer
+
+
+def _notify(recipient, notification_type, title, message, loan):
+    Notification.objects.create(
+        recipient=recipient,
+        type=notification_type,
+        title=title,
+        message=message,
+        related_object_type="loan",
+        related_object_id=loan.id,
+    )
 
 
 @extend_schema(tags=["Empréstimos"])
@@ -41,9 +53,17 @@ class LoanListCreateView(generics.ListCreateAPIView):
         if item.availability != Item.AvailabilityChoices.AVAILABLE:
             raise ValidationError("Item não disponível")
 
-        serializer.save(borrower=self.request.user, lender=item.owner)
+        loan = serializer.save(borrower=self.request.user, lender=item.owner)
         item.availability = Item.AvailabilityChoices.RESERVED
         item.save()
+
+        _notify(
+            recipient=item.owner,
+            notification_type=Notification.TypeChoices.LOAN_REQUEST,
+            title="Nova solicitação de empréstimo",
+            message=f"{self.request.user.first_name or self.request.user.username} quer pegar emprestado: {item.name}.",
+            loan=loan,
+        )
 
 
 @extend_schema(tags=["Empréstimos"])
@@ -84,6 +104,15 @@ class LoanApproveView(APIView):
         loan.item.availability = Item.AvailabilityChoices.BORROWED
         loan.item.save()
         loan.save()
+
+        _notify(
+            recipient=loan.borrower,
+            notification_type=Notification.TypeChoices.LOAN_APPROVED,
+            title="Empréstimo aprovado",
+            message=f"{loan.lender.first_name or loan.lender.username} aprovou seu pedido de empréstimo de {loan.item.name}.",
+            loan=loan,
+        )
+
         return Response(status=status.HTTP_200_OK)
 
 
@@ -114,10 +143,19 @@ class LoanReturnView(APIView):
         loan.item.availability = Item.AvailabilityChoices.AVAILABLE
         loan.item.save()
         loan.save()
+
+        _notify(
+            recipient=loan.borrower,
+            notification_type=Notification.TypeChoices.RETURN_REMINDER,
+            title="Devolução confirmada",
+            message=f"A devolução de {loan.item.name} foi registrada. Não esqueça de deixar uma avaliação!",
+            loan=loan,
+        )
+
         return Response(status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=['Empréstimos'])
+@extend_schema(tags=["Empréstimos"])
 class LoanRejectView(APIView):
     """Rejeita uma solicitação de empréstimo (somente o dono do item)."""
 
@@ -125,7 +163,7 @@ class LoanRejectView(APIView):
 
     @transaction.atomic
     def post(self, request, pk):
-        loan = get_object_or_404(Loan, pk=pk)
+        loan = get_object_or_404(Loan, pk=pk, is_deleted=False)
 
         if request.user != loan.lender:
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -140,10 +178,19 @@ class LoanRejectView(APIView):
         loan.item.availability = Item.AvailabilityChoices.AVAILABLE
         loan.item.save()
         loan.save()
+
+        _notify(
+            recipient=loan.borrower,
+            notification_type=Notification.TypeChoices.LOAN_REJECTED,
+            title="Solicitação recusada",
+            message=f"{loan.lender.first_name or loan.lender.username} não pôde atender seu pedido de empréstimo de {loan.item.name}.",
+            loan=loan,
+        )
+
         return Response(status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=['Empréstimos'])
+@extend_schema(tags=["Empréstimos"])
 class LoanCancelView(APIView):
     """Cancela um empréstimo antes da retirada (somente o solicitante)."""
 
@@ -151,7 +198,7 @@ class LoanCancelView(APIView):
 
     @transaction.atomic
     def post(self, request, pk):
-        loan = get_object_or_404(Loan, pk=pk)
+        loan = get_object_or_404(Loan, pk=pk, is_deleted=False)
 
         if request.user != loan.borrower:
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -169,10 +216,19 @@ class LoanCancelView(APIView):
         loan.item.availability = Item.AvailabilityChoices.AVAILABLE
         loan.item.save()
         loan.save()
+
+        _notify(
+            recipient=loan.lender,
+            notification_type=Notification.TypeChoices.LOAN_REQUEST,
+            title="Solicitação cancelada",
+            message=f"{loan.borrower.first_name or loan.borrower.username} cancelou o pedido de empréstimo de {loan.item.name}.",
+            loan=loan,
+        )
+
         return Response(status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=['Empréstimos'])
+@extend_schema(tags=["Empréstimos"])
 class LoanPickupView(APIView):
     """Confirma a retirada do item pelo solicitante (somente o solicitante)."""
 
@@ -180,7 +236,7 @@ class LoanPickupView(APIView):
 
     @transaction.atomic
     def post(self, request, pk):
-        loan = get_object_or_404(Loan, pk=pk)
+        loan = get_object_or_404(Loan, pk=pk, is_deleted=False)
 
         if request.user != loan.borrower:
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -193,4 +249,13 @@ class LoanPickupView(APIView):
 
         loan.status = Loan.StatusChoices.IN_PROGRESS
         loan.save()
+
+        _notify(
+            recipient=loan.lender,
+            notification_type=Notification.TypeChoices.LOAN_APPROVED,
+            title="Item retirado",
+            message=f"{loan.borrower.first_name or loan.borrower.username} confirmou a retirada de {loan.item.name}.",
+            loan=loan,
+        )
+
         return Response(status=status.HTTP_200_OK)

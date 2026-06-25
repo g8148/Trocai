@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { getConversation, getMessages } from "@/lib/api"
+import { getConversation, getMe, getMessages } from "@/lib/api"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -52,7 +52,7 @@ export default async function ChatThreadPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const conversation = await getConversation(id)
+  const [conversation, me] = await Promise.all([getConversation(id), getMe()])
   const messages = conversation ? await getMessages(id) : []
   const fallback = MOCK_THREADS[id]
 
@@ -63,7 +63,7 @@ export default async function ChatThreadPage({
 
   const thread = messages.length
     ? messages.map((message) => ({
-        sender: message.sender.username ? ("them" as const) : ("me" as const),
+        sender: message.sender.id !== me?.id ? ("them" as const) : ("me" as const),
         content: message.content,
       }))
     : fallback?.messages ?? []

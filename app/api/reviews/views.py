@@ -41,16 +41,16 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         reviewer = self.request.user
 
         if reviewer not in (loan.borrower, loan.lender):
-            raise ValidationError("Voce nao e participante deste emprestimo.")
+            raise ValidationError("Você não é participante deste empréstimo.")
 
         if loan.status != Loan.StatusChoices.RETURNED:
-            raise ValidationError("O emprestimo ainda nao foi devolvido.")
+            raise ValidationError("O empréstimo ainda não foi devolvido.")
 
         if Review.objects.filter(
             loan=loan,
             reviewer=reviewer,
         ).exists():
-            raise ValidationError("Voce ja avaliou este emprestimo.")
+            raise ValidationError("Você já avaliou este empréstimo.")
 
         reviewed_user = loan.lender if reviewer == loan.borrower else loan.borrower
         serializer.save(reviewer=reviewer, reviewed_user=reviewed_user)

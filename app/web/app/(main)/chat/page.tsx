@@ -4,10 +4,7 @@ import { MessageCircle } from "lucide-react"
 import { getConversations, getMe } from "@/lib/api"
 
 const MOCK_CONVERSATIONS = [
-  { id: "mock-joao", name: "Joao", avatar: null, preview: "Ah, otimo! Esclareceu minhas duvidas." },
-  { id: "mock-miguel", name: "Miguel", avatar: null, preview: "Aguardo retorno!" },
-  { id: "mock-alice", name: "Alice", avatar: null, preview: "Obrigada, acredito que va servir para o meu projeto!" },
-  { id: "mock-jose", name: "Jose", avatar: null, preview: "Estamos combinados!" },
+  { id: "mock-joao", name: "João", avatar: null, preview: "Ah, ótimo! Esclareceu minhas dúvidas." },
 ]
 
 export default async function ChatPage() {

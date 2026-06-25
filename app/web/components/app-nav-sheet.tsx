@@ -35,7 +35,6 @@ const ACCOUNT_LINKS = [
 
 const SUPPORT_LINKS = [
   { href: "/contato", label: "Contato" },
-  { href: "/reports/new", label: "Fazer denúncia" },
 ]
 
 function NavLinkItem({
