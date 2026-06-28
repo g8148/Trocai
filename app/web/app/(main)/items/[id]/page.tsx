@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star } from "lucide-react"
+import { Flag, Star } from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { getCategories, getItem, getMe, getReviews } from "@/lib/api"
@@ -217,6 +217,18 @@ export default async function ItemDetailPage({
                   </div>
                 ))}
               </div>
+            </div>
+          ) : null}
+
+          {!isOwner ? (
+            <div className="mb-6">
+              <Link
+                href={`/reports/new?targetItem=${item.id}&targetUser=${item.owner.id}&itemName=${encodeURIComponent(item.name)}&userName=${encodeURIComponent(item.owner.first_name || item.owner.username)}`}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#8a92a3] transition hover:text-red-500"
+              >
+                <Flag className="h-4 w-4" />
+                Denunciar
+              </Link>
             </div>
           ) : null}
 

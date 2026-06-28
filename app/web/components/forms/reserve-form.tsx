@@ -40,11 +40,10 @@ export function ReserveForm({ itemId }: { itemId: string }) {
   }
 
   return (
-    <div className="px-4 pt-2 lg:px-0">
-      <div className="mx-auto w-full max-w-md rounded-2xl border border-black/7 bg-white p-6 shadow-[0_14px_32px_rgba(17,24,39,0.06)]">
-        <h2 className="text-lg font-semibold tracking-tight text-[#111]">
-          Quando você quer o item?
-        </h2>
+    <div className="rounded-[24px] border border-black/5 bg-white p-6 shadow-[0_14px_40px_rgba(17,24,39,0.07)] lg:p-8">
+      <h2 className="text-lg font-semibold tracking-tight text-[#111]">
+        Quando você quer o item?
+      </h2>
         <p className="mt-1 mb-6 text-sm text-[#999]">
           Escolha a retirada e quando pretende devolver.
         </p>
@@ -105,6 +104,5 @@ export function ReserveForm({ itemId }: { itemId: string }) {
           </button>
         </div>
       </div>
-    </div>
   )
 }

@@ -62,3 +62,5 @@ class MessageListCreateView(generics.ListCreateAPIView):
             participants=self.request.user,
         )
         serializer.save(conversation=conversation, sender=self.request.user)
+        # Atualiza updated_at para a conversa subir na lista (ordem por -updated_at)
+        conversation.save(update_fields=["updated_at"])

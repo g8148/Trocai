@@ -9,7 +9,6 @@ import { registerAction } from "@/lib/auth-actions"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { SuccessDialog } from "@/components/success-dialog"
 
 type RegisterValues = {
   fullName: string
@@ -233,7 +232,6 @@ export function RegisterFlow() {
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLookingUpCep, setIsLookingUpCep] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
 
   function updateField(name: keyof RegisterValues, value: string) {
     setValues((current) => ({ ...current, [name]: value }))
@@ -362,7 +360,7 @@ export function RegisterFlow() {
       return
     }
 
-    setShowSuccess(true)
+    router.push("/")
   }
 
   return (
@@ -608,20 +606,6 @@ export function RegisterFlow() {
           Entrar
         </a>
       </p>
-
-      <SuccessDialog
-        open={showSuccess}
-        onOpenChange={(open) => {
-          setShowSuccess(open)
-          if (!open) {
-            router.push("/")
-          }
-        }}
-        title="Conta criada com sucesso!"
-        description={
-          "Sua conta já está ativa.\n\nConfirme seu e-mail ou telefone para validar sua identidade e começar a trocar com a vizinhança."
-        }
-      />
     </>
   )
 }

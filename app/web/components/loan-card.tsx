@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { UserRound, CalendarDays, RotateCcw } from "lucide-react"
+import { UserRound, CalendarDays, RotateCcw, Flag } from "lucide-react"
 import { toast } from "sonner"
 
 import type { LoanEntry } from "@/lib/api"
@@ -180,6 +180,18 @@ export function LoanCard({ loan, role }: { loan: LoanEntry; role: Role }) {
             className="inline-flex h-10 items-center rounded-lg bg-[#2fb1c2] px-4 text-sm font-medium text-white transition-colors hover:bg-[#26a0b0]"
           >
             Avaliar
+          </Link>
+        </div>
+      )}
+
+      {!["pending", "rejected", "cancelled"].includes(loan.status) && (
+        <div className="mt-3 border-t border-black/5 pt-3">
+          <Link
+            href={`/reports/new?targetLoan=${loan.id}&loanLabel=${encodeURIComponent(loan.item_name ?? "Empréstimo")}`}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#8a92a3] transition hover:text-red-500"
+          >
+            <Flag className="h-3.5 w-3.5" />
+            Denunciar
           </Link>
         </div>
       )}

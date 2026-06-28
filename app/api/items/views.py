@@ -14,6 +14,19 @@ from .models import Category, Item
 from .serializers import CategorySerializer, ImageUploadSerializer, ItemSerializer
 
 
+def _haversine_km(lat1, lon1, lat2, lon2):
+    """Distância em km entre dois pontos (lat/lon em graus) pela fórmula de Haversine."""
+    r = 6371.0  # raio médio da Terra em km
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    d_phi = math.radians(lat2 - lat1)
+    d_lambda = math.radians(lon2 - lon1)
+    a = (
+        math.sin(d_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
+    )
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
 class IsOwnerOrReadOnly(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
@@ -83,26 +96,15 @@ class ItemListCreateView(generics.ListCreateAPIView):
             )
 
         user = self.request.user
+        nearby = p.get("nearby") in {"1", "true"}
         if (
-            user.is_authenticated
+            nearby  # opt-in: só filtra por distância quando o cliente pede
+            and user.is_authenticated
             and user.latitude is not None
             and user.longitude is not None
             and not owner_id  # não filtrar por distância se buscando itens de alguém específico
         ):
-            u_lat = float(user.latitude)
-            u_lon = float(user.longitude)
-            radius = user.search_radius_km
-
-            # Aproximação de caixa delimitadora: 1° lat ≈ 111.32 km
-            lat_delta = radius / 111.32
-            lon_delta = radius / (111.32 * math.cos(math.radians(u_lat)))
-
-            queryset = queryset.filter(
-                owner__latitude__isnull=False,
-                owner__longitude__isnull=False,
-                owner__latitude__range=(u_lat - lat_delta, u_lat + lat_delta),
-                owner__longitude__range=(u_lon - lon_delta, u_lon + lon_delta),
-            )
+            queryset = self._filter_by_distance(queryset, user)
 
         queryset = queryset.annotate(
             avg_item_rating=Avg(
@@ -116,6 +118,38 @@ class ItemListCreateView(generics.ListCreateAPIView):
         )
 
         return queryset.order_by("-created_at")
+
+    def _filter_by_distance(self, queryset, user):
+        u_lat = float(user.latitude)
+        u_lon = float(user.longitude)
+        radius = user.search_radius_km
+
+        # 1ª passada (no banco): caixa delimitadora barata para reduzir o conjunto.
+        # 1° lat ≈ 111.32 km; longitude encolhe pelo cosseno da latitude.
+        lat_delta = radius / 111.32
+        lon_delta = radius / (111.32 * math.cos(math.radians(u_lat)))
+
+        queryset = queryset.filter(
+            owner__latitude__isnull=False,
+            owner__longitude__isnull=False,
+            owner__latitude__range=(u_lat - lat_delta, u_lat + lat_delta),
+            owner__longitude__range=(u_lon - lon_delta, u_lon + lon_delta),
+        )
+
+        # 2ª passada (Haversine, raio real): a caixa é um quadrado, então recorta
+        # os cantos que passam do raio. Mantém como queryset via id__in para não
+        # quebrar paginação/annotations a jusante.
+        near_ids = [
+            item.id
+            for item in queryset.only(
+                "id", "owner__latitude", "owner__longitude"
+            )
+            if _haversine_km(
+                u_lat, u_lon, item.owner.latitude, item.owner.longitude
+            )
+            <= radius
+        ]
+        return queryset.filter(id__in=near_ids)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)

@@ -66,7 +66,7 @@ export function ReviewForm({
 
   return (
     <>
-      <div className="space-y-5 px-5 pb-8 pt-6">
+      <div className="space-y-5 rounded-[24px] border border-black/5 bg-white p-6 shadow-[0_14px_40px_rgba(17,24,39,0.07)] lg:p-8">
         <p className="text-sm text-[#5d6678]">* Campos obrigatórios</p>
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#182034]">Ferramenta *</label>

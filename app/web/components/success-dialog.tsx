@@ -1,5 +1,7 @@
 "use client"
 
+import { Check } from "lucide-react"
+
 import {
   Dialog,
   DialogClose,
@@ -14,7 +16,7 @@ export function SuccessDialog({
   onOpenChange,
   title,
   description,
-  actionLabel,
+  actionLabel = "Entendi",
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -25,22 +27,30 @@ export function SuccessDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[min(360px,calc(100%-2rem))] rounded-[34px] border-0 px-8 py-18 text-center shadow-[0_24px_80px_rgba(16,24,44,0.18)]"
-        showCloseButton
+        showCloseButton={false}
+        className="max-w-[min(400px,calc(100%-2rem))] gap-0 rounded-[28px] border-0 p-7 shadow-[0_24px_80px_rgba(16,24,44,0.18)]"
       >
-        <DialogTitle className="text-[2rem] font-medium tracking-[-0.05em] text-[#182034]">
-          {title}
-        </DialogTitle>
-        <DialogDescription className="mt-6 whitespace-pre-line text-[1.55rem] leading-[1.28] tracking-[-0.04em] text-[#182034]">
-          {description}
-        </DialogDescription>
-        {actionLabel ? (
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-white">
+              <Check className="h-6 w-6" strokeWidth={2.5} />
+            </span>
+          </div>
+
+          <DialogTitle className="mt-5 text-xl font-semibold tracking-[-0.01em] text-[#182034]">
+            {title}
+          </DialogTitle>
+
+          <DialogDescription className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[#5d6678]">
+            {description}
+          </DialogDescription>
+
           <DialogClose asChild>
-            <Button className="mt-6 h-12 rounded-2xl bg-[#10182c] text-sm font-semibold text-white hover:bg-[#243149]">
+            <Button className="mt-7 h-12 w-full rounded-2xl bg-[#10182c] text-sm font-semibold text-white hover:bg-[#243149]">
               {actionLabel}
             </Button>
           </DialogClose>
-        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   )

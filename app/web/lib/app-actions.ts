@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 
-import { apiRequest, API_URL, type AppUser, type ItemSummary } from "./api"
+import {
+  apiRequest,
+  API_URL,
+  getMe,
+  getMessages,
+  type AppUser,
+  type ItemSummary,
+  type MessageEntry,
+} from "./api"
 import { getAccessToken } from "./auth"
 
 const USER_COOKIE_MAX_AGE = 7 * 24 * 60 * 60
@@ -181,6 +189,16 @@ export async function sendMessageAction(conversationId: string, content: string)
       error: error instanceof Error ? error.message : "Não foi possível enviar a mensagem.",
     }
   }
+}
+
+export async function fetchThreadAction(
+  conversationId: string
+): Promise<{ messages: MessageEntry[]; meId: string | null }> {
+  const [me, messages] = await Promise.all([
+    getMe(),
+    getMessages(conversationId),
+  ])
+  return { messages, meId: me?.id ?? null }
 }
 
 export async function markNotificationReadAction(id: string) {

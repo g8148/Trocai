@@ -8,7 +8,7 @@ export default async function LoansPage() {
   const sent = me ? loans.filter((loan) => loan.borrower.id === me.id) : []
 
   return (
-    <div className="px-4 pt-4 pb-12 lg:px-0 lg:pt-8">
+    <div className="mx-auto max-w-5xl px-4 pt-4 pb-12 lg:px-0 lg:pt-8">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-[#111]">
           Meus empréstimos
