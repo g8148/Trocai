@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import {
+  Loader2,
   MapPin,
   Minus,
   Pencil,
@@ -26,34 +27,52 @@ import {
 const MIN_RADIUS = 1
 const MAX_RADIUS = 30
 
+function maskCep(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8)
+  if (digits.length <= 5) return digits
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`
+}
+
 function DialogField({
   label,
   value,
   onChange,
+  onBlur,
   type = "text",
   placeholder,
   maxLength,
+  suffix,
 }: {
   label: string
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   type?: string
   placeholder?: string
   maxLength?: number
+  suffix?: React.ReactNode
 }) {
   return (
     <div>
       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8a92a3]">
         {label}
       </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        className="h-11 w-full rounded-xl border border-black/10 bg-white px-3.5 text-sm text-[#182034] outline-none transition focus:border-[#2fb1c2] focus:ring-2 focus:ring-[#2fb1c2]/10"
-      />
+      <div className="relative">
+        <input
+          type={type}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={onBlur}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className="h-11 w-full rounded-xl border border-black/10 bg-white px-3.5 text-sm text-[#182034] outline-none transition focus:border-[#2fb1c2] focus:ring-2 focus:ring-[#2fb1c2]/10"
+        />
+        {suffix ? (
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            {suffix}
+          </span>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -210,6 +229,7 @@ function AddressDialog({
   const [neighborhood, setNeighborhood] = useState(user.neighborhood ?? "")
   const [city, setCity] = useState(user.city ?? "")
   const [state, setState] = useState(user.state ?? "")
+  const [isLookingUpCep, setIsLookingUpCep] = useState(false)
   const { save, isPending, error, setError } = useSaveProfile(() =>
     onOpenChange(false)
   )
@@ -217,6 +237,27 @@ function AddressDialog({
   function handleOpenChange(next: boolean) {
     if (!next) setError(null)
     onOpenChange(next)
+  }
+
+  async function lookupCep() {
+    const digits = zip.replace(/\D/g, "")
+    if (digits.length !== 8) return
+
+    setIsLookingUpCep(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
+      const data = await res.json()
+      if (!data?.erro) {
+        if (data.logradouro) setStreet(data.logradouro)
+        if (data.bairro) setNeighborhood(data.bairro)
+        if (data.localidade) setCity(data.localidade)
+        if (data.uf) setState(data.uf)
+      }
+    } catch {
+      // conveniência: falha silenciosa, usuário preenche à mão
+    } finally {
+      setIsLookingUpCep(false)
+    }
   }
 
   function handleSave() {
@@ -242,8 +283,14 @@ function AddressDialog({
           <DialogField
             label="CEP"
             value={zip}
-            onChange={setZip}
+            onChange={(v) => setZip(maskCep(v))}
+            onBlur={lookupCep}
             placeholder="00000-000"
+            suffix={
+              isLookingUpCep ? (
+                <Loader2 className="h-4 w-4 animate-spin text-[#2fb1c2]" />
+              ) : null
+            }
           />
           <DialogField label="Rua" value={street} onChange={setStreet} />
           <DialogField
