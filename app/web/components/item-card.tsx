@@ -111,15 +111,19 @@ export function ItemCard({
               <MapPin className="h-3.5 w-3.5" />
               {item.category_name ?? "Perto de você"}
             </span>
-            <span className="inline-flex items-center gap-0.5 text-[#ff8b2c]">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star
-                  key={`${item.id}-${index}`}
-                  className="h-3.5 w-3.5"
-                  fill={index < 4 ? "currentColor" : "none"}
-                />
-              ))}
-            </span>
+            {item.average_rating !== null ? (
+              <span className="inline-flex items-center gap-0.5 text-[#ff8b2c]">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star
+                    key={`${item.id}-${index}`}
+                    className="h-3.5 w-3.5"
+                    fill={index < Math.round(item.average_rating!) ? "currentColor" : "none"}
+                  />
+                ))}
+              </span>
+            ) : (
+              <span className="text-xs text-[#b0b8c5]">Sem avaliações</span>
+            )}
           </div>
           {price ? (
             <p className="text-[1.8rem] font-semibold tracking-[-0.05em] text-[#ff8b2c] lg:text-xl">
