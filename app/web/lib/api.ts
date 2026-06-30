@@ -274,6 +274,7 @@ export async function getItems(
   condition?: string,
   availability?: string,
   segregation?: string,
+  nearby?: boolean,
 ) {
   const params = new URLSearchParams()
   if (search) params.set("search", search)
@@ -282,6 +283,7 @@ export async function getItems(
   if (condition) params.set("condition", condition)
   if (availability) params.set("availability", availability)
   if (segregation) params.set("segregation", segregation)
+  if (nearby) params.set("nearby", "1")
 
   const query = params.toString()
   const path = `/api/items/${query ? `?${query}` : ""}`

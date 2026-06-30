@@ -29,7 +29,8 @@ export default async function SearchPage({
     undefined,
     condition,
     availability,
-    segregation
+    segregation,
+    true,
   )
 
   return (

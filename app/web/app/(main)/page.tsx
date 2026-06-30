@@ -5,7 +5,7 @@ import { FeaturedItemsCarousel } from "@/components/featured-items-carousel"
 import { ItemCard } from "@/components/item-card"
 
 export default async function HomePage() {
-  const items = await getItems()
+  const items = await getItems(undefined, undefined, undefined, undefined, undefined, undefined, true)
   const catalog = items
 
   return (
