@@ -1,19 +1,16 @@
-from django.db.models.signals import pre_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 
 @receiver(pre_save, sender="accounts.User")
 def reset_coords_on_address_change(sender, instance, **kwargs):
-    """Quando o endereço muda, invalida as coordenadas para o geocoding refazer.
+    """Quando o endereço muda, invalida as coordenadas para forçar re-geocodificação.
 
-    O geocoding em si NÃO acontece aqui: bater no Nominatim dentro do save
-    bloquearia a request (rede lenta/instável) e deixaria o cadastro/edição
-    de perfil refém de um serviço externo. Quem geocodifica é o management
-    command `geocode_users` (rodado por cron na VPS), que pega justamente os
-    usuários com city/state preenchidos e lat/lng nulos.
+    A geocodificação em si acontece no post_save via background thread,
+    sem bloquear o request.
     """
     if not instance.pk:
-        # Usuário novo: nasce sem coordenadas; o command geocodifica depois.
+        # Usuário novo: nasce sem coordenadas; post_save vai geocodificar.
         return
 
     try:
@@ -32,3 +29,25 @@ def reset_coords_on_address_change(sender, instance, **kwargs):
     if address_changed:
         instance.latitude = None
         instance.longitude = None
+        instance._needs_geocoding = True
+    else:
+        instance._needs_geocoding = False
+
+
+@receiver(post_save, sender="accounts.User")
+def trigger_geocoding(sender, instance, created, **kwargs):
+    """Dispara geocodificação em background quando endereço muda ou usuário é criado."""
+    needs = getattr(instance, "_needs_geocoding", None)
+
+    # Para usuários novos, geocodifica se já trouxer city+state no cadastro.
+    if created:
+        if not instance.city or not instance.state:
+            return
+    elif not needs:
+        return
+
+    if instance.latitude is not None:
+        return
+
+    from .geocoding import geocode_user_async
+    geocode_user_async(str(instance.pk))
