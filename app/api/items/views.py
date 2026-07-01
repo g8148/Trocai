@@ -124,32 +124,38 @@ class ItemListCreateView(generics.ListCreateAPIView):
         u_lon = float(user.longitude)
         radius = user.search_radius_km
 
-        # 1ª passada (no banco): caixa delimitadora barata para reduzir o conjunto.
-        # 1° lat ≈ 111.32 km; longitude encolhe pelo cosseno da latitude.
         lat_delta = radius / 111.32
         lon_delta = radius / (111.32 * math.cos(math.radians(u_lat)))
 
-        queryset = queryset.filter(
+        # Donos sem coordenadas: não dá para calcular distância, então incluímos.
+        # Isso evita sumir com itens de usuários que ainda não foram geocodificados.
+        unknown_ids = list(
+            queryset.filter(
+                Q(owner__latitude__isnull=True) | Q(owner__longitude__isnull=True)
+            ).values_list("id", flat=True)
+        )
+
+        # 1ª passada (no banco): caixa delimitadora barata para donos geocodificados.
+        within_box = queryset.filter(
             owner__latitude__isnull=False,
             owner__longitude__isnull=False,
             owner__latitude__range=(u_lat - lat_delta, u_lat + lat_delta),
             owner__longitude__range=(u_lon - lon_delta, u_lon + lon_delta),
         )
 
-        # 2ª passada (Haversine, raio real): a caixa é um quadrado, então recorta
-        # os cantos que passam do raio. Mantém como queryset via id__in para não
-        # quebrar paginação/annotations a jusante.
+        # 2ª passada (Haversine): recorta os cantos que passam do raio.
         near_ids = [
             item.id
-            for item in queryset.only(
+            for item in within_box.select_related("owner").only(
                 "id", "owner__latitude", "owner__longitude"
             )
             if _haversine_km(
-                u_lat, u_lon, item.owner.latitude, item.owner.longitude
-            )
-            <= radius
+                u_lat, u_lon,
+                float(item.owner.latitude), float(item.owner.longitude),
+            ) <= radius
         ]
-        return queryset.filter(id__in=near_ids)
+
+        return queryset.filter(id__in=near_ids + unknown_ids)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
