@@ -129,15 +129,14 @@ class ItemListCreateView(generics.ListCreateAPIView):
         lat_delta = radius / 111.32
         lon_delta = radius / (111.32 * math.cos(math.radians(u_lat)))
 
-        # Donos sem coordenadas: não dá para calcular distância, então incluímos.
-        # Isso evita sumir com itens de usuários que ainda não foram geocodificados.
+        # Donos sem coordenadas: distância desconhecida → inclui sempre.
         unknown_ids = list(
             queryset.filter(
                 Q(owner__latitude__isnull=True) | Q(owner__longitude__isnull=True)
             ).values_list("id", flat=True)
         )
 
-        # 1ª passada (no banco): caixa delimitadora barata para donos geocodificados.
+        # Donos geocodificados: caixa delimitadora + Haversine.
         within_box = queryset.filter(
             owner__latitude__isnull=False,
             owner__longitude__isnull=False,
@@ -145,7 +144,6 @@ class ItemListCreateView(generics.ListCreateAPIView):
             owner__longitude__range=(u_lon - lon_delta, u_lon + lon_delta),
         )
 
-        # 2ª passada (Haversine): recorta os cantos que passam do raio.
         near_ids = [
             item.id
             for item in within_box.select_related("owner").only(
@@ -157,7 +155,12 @@ class ItemListCreateView(generics.ListCreateAPIView):
             ) <= radius
         ]
 
-        return queryset.filter(id__in=near_ids + unknown_ids)
+        all_ids = near_ids + unknown_ids
+        if not all_ids:
+            # Nenhum resultado após filtro (sem donos próximos e sem desconhecidos)
+            # → retorna tudo para não deixar a tela vazia por falha de dados.
+            return queryset
+        return queryset.filter(id__in=all_ids)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
