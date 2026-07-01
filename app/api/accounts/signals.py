@@ -32,7 +32,9 @@ def reset_coords_on_address_change(sender, instance, **kwargs):
         instance.geocoding_failed = False
         instance._needs_geocoding = True
     else:
-        instance._needs_geocoding = False
+        # Endereço não mudou, mas se ainda não temos coordenadas tenta geocodificar
+        # (cobre usuários antigos e retentativas após falha do Nominatim).
+        instance._needs_geocoding = instance.latitude is None
 
 
 @receiver(post_save, sender="accounts.User")

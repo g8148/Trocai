@@ -6,6 +6,17 @@ logger = logging.getLogger(__name__)
 NOMINATIM_USER_AGENT = "trocai-app/1.0 (contato@trocai.app)"
 NOMINATIM_TIMEOUT = 10
 
+# Mapeamento de sigla → nome completo para melhorar a precisão da geocodificação.
+ESTADO_NOMES = {
+    "AC": "Acre", "AL": "Alagoas", "AM": "Amazonas", "AP": "Amapá",
+    "BA": "Bahia", "CE": "Ceará", "DF": "Distrito Federal", "ES": "Espírito Santo",
+    "GO": "Goiás", "MA": "Maranhão", "MG": "Minas Gerais", "MS": "Mato Grosso do Sul",
+    "MT": "Mato Grosso", "PA": "Pará", "PB": "Paraíba", "PE": "Pernambuco",
+    "PI": "Piauí", "PR": "Paraná", "RJ": "Rio de Janeiro", "RN": "Rio Grande do Norte",
+    "RO": "Rondônia", "RR": "Roraima", "RS": "Rio Grande do Sul", "SC": "Santa Catarina",
+    "SE": "Sergipe", "SP": "São Paulo", "TO": "Tocantins",
+}
+
 
 def _fetch_coordinates(city: str, state: str, street: str = "", neighborhood: str = ""):
     """Retorna (lat, lon) ou None se a geocodificação falhar."""
@@ -17,13 +28,23 @@ def _fetch_coordinates(city: str, state: str, street: str = "", neighborhood: st
         return None
 
     geocoder = Nominatim(user_agent=NOMINATIM_USER_AGENT, timeout=NOMINATIM_TIMEOUT)
+    state_name = ESTADO_NOMES.get(state.upper(), state)
 
-    parts_full = [p for p in [street, neighborhood, city, state, "Brasil"] if p]
-    parts_fallback = [p for p in [city, state, "Brasil"] if p]
+    # Tenta do mais específico para o mais genérico, sempre restrito ao Brasil.
+    queries = [
+        # 1. Endereço completo com nome do estado por extenso
+        ", ".join(p for p in [street, neighborhood, city, state_name] if p),
+        # 2. Só cidade e estado por extenso
+        f"{city}, {state_name}",
+        # 3. Cidade e sigla (fallback para cidades com nome ambíguo)
+        f"{city}, {state}",
+    ]
 
-    for query in (", ".join(parts_full), ", ".join(parts_fallback)):
+    for query in queries:
+        if not query.strip():
+            continue
         try:
-            location = geocoder.geocode(query)
+            location = geocoder.geocode(query, country_codes="BR")
         except (GeocoderTimedOut, GeocoderServiceError):
             location = None
         if location:
