@@ -14,6 +14,7 @@ export interface AppUser extends AuthUser {
   state: string
   latitude: string | null
   longitude: string | null
+  geocoding_failed: boolean
   search_radius_km: number
   status: "available" | "away" | "blocked"
   email_verified: boolean

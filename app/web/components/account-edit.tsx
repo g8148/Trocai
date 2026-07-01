@@ -230,12 +230,16 @@ function AddressDialog({
   const [city, setCity] = useState(user.city ?? "")
   const [state, setState] = useState(user.state ?? "")
   const [isLookingUpCep, setIsLookingUpCep] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
   const { save, isPending, error, setError } = useSaveProfile(() =>
     onOpenChange(false)
   )
 
   function handleOpenChange(next: boolean) {
-    if (!next) setError(null)
+    if (!next) {
+      setError(null)
+      setLocalError(null)
+    }
     onOpenChange(next)
   }
 
@@ -248,10 +252,10 @@ function AddressDialog({
       const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
       const data = await res.json()
       if (!data?.erro) {
-        if (data.logradouro) setStreet(data.logradouro)
-        if (data.bairro) setNeighborhood(data.bairro)
-        if (data.localidade) setCity(data.localidade)
-        if (data.uf) setState(data.uf)
+        setStreet(data.logradouro ?? street)
+        setNeighborhood(data.bairro ?? neighborhood)
+        setCity(data.localidade ?? city)
+        setState(data.uf ?? state)
       }
     } catch {
       // conveniência: falha silenciosa, usuário preenche à mão
@@ -261,6 +265,15 @@ function AddressDialog({
   }
 
   function handleSave() {
+    setLocalError(null)
+    if (!city.trim()) {
+      setLocalError("Cidade é obrigatória para ativar o filtro por raio.")
+      return
+    }
+    if (!state.trim()) {
+      setLocalError("Estado é obrigatório para ativar o filtro por raio.")
+      return
+    }
     save({
       zip_code: zip,
       street,
@@ -280,6 +293,11 @@ function AddressDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-1">
+          {user.geocoding_failed ? (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+              Não conseguimos localizar seu endereço atual. Revise os campos abaixo e salve novamente para ativar o filtro por raio.
+            </p>
+          ) : null}
           <DialogField
             label="CEP"
             value={zip}
@@ -299,18 +317,18 @@ function AddressDialog({
             onChange={setNeighborhood}
           />
           <div className="grid grid-cols-[1fr_auto] gap-3">
-            <DialogField label="Cidade" value={city} onChange={setCity} />
+            <DialogField label="Cidade *" value={city} onChange={setCity} />
             <div className="w-20">
               <DialogField
-                label="UF"
+                label="UF *"
                 value={state}
-                onChange={setState}
+                onChange={(v) => setState(v.toUpperCase().slice(0, 2))}
                 placeholder="SP"
                 maxLength={2}
               />
             </div>
           </div>
-          <ErrorNote message={error} />
+          <ErrorNote message={localError ?? error} />
         </div>
         <DialogActions
           onCancel={() => handleOpenChange(false)}
@@ -459,7 +477,13 @@ export function AccountEditRail({ user }: { user: AppUser }) {
   )
 }
 
-export function AccountRadiusCard({ radius }: { radius: number }) {
+export function AccountRadiusCard({
+  radius,
+  filterActive,
+}: {
+  radius: number
+  filterActive: boolean
+}) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -479,6 +503,9 @@ export function AccountRadiusCard({ radius }: { radius: number }) {
           <p className="text-sm font-medium leading-snug text-[#182034]">
             {radius} km
           </p>
+          {!filterActive ? (
+            <p className="mt-0.5 text-[11px] text-amber-600">filtro inativo</p>
+          ) : null}
         </div>
         <Pencil className="h-3.5 w-3.5 shrink-0 text-[#c8ccd4] transition-colors group-hover:text-[#2fb1c2]" />
       </button>

@@ -33,6 +33,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "state",
             "latitude",
             "longitude",
+            "geocoding_failed",
             "search_radius_km",
             "status",
             "email_verified",
@@ -43,6 +44,9 @@ class UserDetailSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "latitude",
+            "longitude",
+            "geocoding_failed",
             "email_verified",
             "phone_verified",
             "average_rating",
@@ -61,10 +65,17 @@ class UserDetailSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A imagem deve ter no máximo 5MB.")
         return value
 
+    def validate_city(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Cidade é obrigatória.")
+        return value.strip()
+
     def validate_state(self, value):
-        if value and value.upper() not in VALID_STATES:
+        if not value or not value.strip():
+            raise serializers.ValidationError("Estado é obrigatório.")
+        if value.upper() not in VALID_STATES:
             raise serializers.ValidationError("Informe uma sigla de estado brasileira válida (ex: SC, SP, RJ).")
-        return value.upper() if value else value
+        return value.upper()
 
 
 class CustomRegisterSerializer(RegisterSerializer):
@@ -74,13 +85,11 @@ class CustomRegisterSerializer(RegisterSerializer):
     phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
     first_name = serializers.CharField(max_length=150, required=True)
     last_name = serializers.CharField(max_length=150, required=True)
-    zip_code = serializers.CharField(max_length=9, required=False, allow_blank=True)
-    street = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    neighborhood = serializers.CharField(
-        max_length=255, required=False, allow_blank=True
-    )
-    city = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    state = serializers.CharField(max_length=2, required=False, allow_blank=True)
+    zip_code = serializers.CharField(max_length=9, required=True)
+    street = serializers.CharField(max_length=255, required=True)
+    neighborhood = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    city = serializers.CharField(max_length=255, required=True)
+    state = serializers.CharField(max_length=2, required=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -96,9 +105,11 @@ class CustomRegisterSerializer(RegisterSerializer):
         return value
 
     def validate_state(self, value):
-        if value and value.upper() not in VALID_STATES:
+        if not value or not value.strip():
+            raise serializers.ValidationError("Estado é obrigatório.")
+        if value.upper() not in VALID_STATES:
             raise serializers.ValidationError("Informe uma sigla de estado brasileira válida (ex: SC, SP, RJ).")
-        return value.upper() if value else value
+        return value.upper()
 
     def validate_email(self, value):
         from .models import User

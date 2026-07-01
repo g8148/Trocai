@@ -29,6 +29,7 @@ def reset_coords_on_address_change(sender, instance, **kwargs):
     if address_changed:
         instance.latitude = None
         instance.longitude = None
+        instance.geocoding_failed = False
         instance._needs_geocoding = True
     else:
         instance._needs_geocoding = False

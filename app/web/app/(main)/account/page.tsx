@@ -1,4 +1,4 @@
-import { FileText, LogOut, Mail, MapPin, Phone, Star } from "lucide-react"
+import { AlertTriangle, FileText, LogOut, Mail, MapPin, Phone, Star } from "lucide-react"
 
 import { getCategories, getItems, getMe, getReviews } from "@/lib/api"
 import { logoutAction } from "@/lib/auth-actions"
@@ -110,6 +110,34 @@ export default async function AccountPage() {
 
         {/* Coluna principal */}
         <div className="mt-6 space-y-8 lg:mt-0">
+          {(user.geocoding_failed || (!user.latitude && user.city)) ? (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  Localização não confirmada
+                </p>
+                <p className="mt-0.5 text-xs text-amber-700">
+                  Não conseguimos localizar seu endereço — o filtro por raio está desativado. Acesse{" "}
+                  <strong>Endereço</strong> no menu ao lado e revise as informações.
+                </p>
+              </div>
+            </div>
+          ) : !user.city ? (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  Endereço não cadastrado
+                </p>
+                <p className="mt-0.5 text-xs text-amber-700">
+                  Sem endereço, o filtro por raio não funciona. Clique em{" "}
+                  <strong>Endereço</strong> no menu ao lado para cadastrar.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
           <section className="space-y-3">
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#b0b8c5]">
               Detalhes
@@ -119,7 +147,10 @@ export default async function AccountPage() {
               <DetailCard icon={Phone} label="Telefone" value={user.phone} />
               <DetailCard icon={MapPin} label="Localização" value={location} />
               <DetailCard icon={FileText} label="CPF" value={maskedCpf} />
-              <AccountRadiusCard radius={user.search_radius_km ?? 5} />
+              <AccountRadiusCard
+                radius={user.search_radius_km ?? 5}
+                filterActive={Boolean(user.latitude)}
+              />
             </div>
           </section>
 

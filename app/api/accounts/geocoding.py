@@ -60,10 +60,13 @@ def geocode_user_async(user_pk: str) -> None:
 
             if result is None:
                 logger.warning("Geocodificação falhou para o usuário %s", user_pk)
+                User.objects.filter(pk=user_pk).update(geocoding_failed=True)
                 return
 
             lat, lon = result
-            User.objects.filter(pk=user_pk).update(latitude=lat, longitude=lon)
+            User.objects.filter(pk=user_pk).update(
+                latitude=lat, longitude=lon, geocoding_failed=False
+            )
             logger.info("Usuário %s geocodificado: (%s, %s)", user_pk, lat, lon)
 
         except Exception:

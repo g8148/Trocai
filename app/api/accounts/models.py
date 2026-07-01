@@ -57,6 +57,10 @@ class User(AbstractUser):
     longitude = models.DecimalField(
         max_digits=10, decimal_places=7, null=True, blank=True
     )
+    geocoding_failed = models.BooleanField(
+        default=False,
+        help_text="True quando a geocodificacao falhou para o endereco atual.",
+    )
 
     # Configuracoes do usuario
     search_radius_km = models.PositiveIntegerField(
