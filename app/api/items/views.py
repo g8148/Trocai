@@ -97,14 +97,16 @@ class ItemListCreateView(generics.ListCreateAPIView):
 
         user = self.request.user
         nearby = p.get("nearby") in {"1", "true"}
-        if (
-            nearby  # opt-in: só filtra por distância quando o cliente pede
-            and user.is_authenticated
+        user_has_location = (
+            user.is_authenticated
             and user.latitude is not None
             and user.longitude is not None
-            and not owner_id  # não filtrar por distância se buscando itens de alguém específico
-        ):
-            queryset = self._filter_by_distance(queryset, user)
+        )
+        if nearby and user_has_location and not owner_id:
+            try:
+                queryset = self._filter_by_distance(queryset, user)
+            except Exception:
+                pass  # qualquer falha de localização → mostra tudo
 
         queryset = queryset.annotate(
             avg_item_rating=Avg(
