@@ -35,11 +35,17 @@ log "Instalando dependencias da API..."
 log "Backup do banco..."
 if [ ! -w "$BACKUP_DIR" ]; then
     echo "[deploy] ERRO: $BACKUP_DIR nao existe ou nao e gravavel pelo usuario"
-    echo "[deploy] Crie com:  sudo mkdir -p $BACKUP_DIR && sudo chown ubuntu:ubuntu $BACKUP_DIR"
+    echo "[deploy] Crie com:  sudo install -d -m 700 -o ubuntu -g ubuntu $BACKUP_DIR"
     exit 1
 fi
-docker exec trocai-db pg_dump -U trocai trocai \
-    | gzip > "$BACKUP_DIR/$(date '+%Y-%m-%d-%H%M%S').sql.gz"
+# O dump contem dados pessoais (CPF, e-mail, coordenadas, hashes de senha).
+# O umask 077 garante 0600 no arquivo: legivel so pelo dono, nunca pelos
+# outros usuarios e containers que dividem a maquina.
+(
+    umask 077
+    docker exec trocai-db pg_dump -U trocai trocai \
+        | gzip > "$BACKUP_DIR/$(date '+%Y-%m-%d-%H%M%S').sql.gz"
+)
 # Mantem apenas os 5 backups mais recentes.
 ls -t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | tail -n +6 | xargs -r rm --
 
