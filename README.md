@@ -7,7 +7,7 @@ Plataforma de empréstimo de ferramentas e serviços comunitários. Projeto acad
 | Camada | Tecnologia |
 |--------|-----------|
 | Frontend | Next.js + npm |
-| Backend | Python 3.14, Django 6, Django REST Framework 3.16 |
+| Backend | Python 3.12+, Django 6, Django REST Framework 3.16 |
 | Banco | PostgreSQL 18.3 (Docker) |
 | Auth | JWT via SimpleJWT + dj-rest-auth + django-allauth |
 
@@ -33,7 +33,7 @@ doc/          # Documentação e diagramas
 ### Pré-requisitos
 
 - Docker e Docker Compose
-- Python 3.14 + virtualenv
+- Python 3.12 ou superior + virtualenv
 - Node.js 22+ (npm)
 
 ### Backend

@@ -15,6 +15,7 @@ REPO_DIR="/opt/Trocai"
 API_DIR="$REPO_DIR/app/api"
 WEB_DIR="$REPO_DIR/app/web"
 VENV="$API_DIR/.venv"
+BACKUP_DIR="/var/backups/trocai"
 
 log() {
     echo "[deploy] $(date '+%Y-%m-%d %H:%M:%S') - $*"
@@ -26,6 +27,21 @@ log "Iniciando deploy de $(git -C "$REPO_DIR" rev-parse --short HEAD)"
 
 log "Instalando dependencias da API..."
 "$VENV/bin/pip" install -r "$API_DIR/requirements.txt" --quiet
+
+# Backup antes de migrar. Nao e rollback automatico: e o botao de desfazer
+# para o caso de uma migration aplicar e o deploy falhar depois dela.
+# Restaurar com:
+#   gunzip -c ARQUIVO.sql.gz | docker exec -i trocai-db psql -U trocai trocai
+log "Backup do banco..."
+if [ ! -w "$BACKUP_DIR" ]; then
+    echo "[deploy] ERRO: $BACKUP_DIR nao existe ou nao e gravavel pelo usuario"
+    echo "[deploy] Crie com:  sudo mkdir -p $BACKUP_DIR && sudo chown ubuntu:ubuntu $BACKUP_DIR"
+    exit 1
+fi
+docker exec trocai-db pg_dump -U trocai trocai \
+    | gzip > "$BACKUP_DIR/$(date '+%Y-%m-%d-%H%M%S').sql.gz"
+# Mantem apenas os 5 backups mais recentes.
+ls -t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | tail -n +6 | xargs -r rm --
 
 log "Aplicando migrations..."
 cd "$API_DIR" && "$VENV/bin/python" manage.py migrate --noinput

@@ -36,6 +36,15 @@ Cloudflare Tunnel  (cloudflared.service)
 
 ## Montando uma VPS do zero
 
+> **O que foi validado.** Os passos 1, 3 e 4 foram executados num container
+> Ubuntu 24.04 limpo: os pacotes do `apt` existem, o venv cria, as
+> `requirements.txt` instalam, e a partir do `.env.example` copiado o
+> `manage.py check` passa sem issues, o `migrate` aplica todas as migrations e
+> o `collectstatic` roda. Os passos 5 a 7 (systemd, cloudflared, sudoers) **não**
+> foram testados numa máquina limpa — dependem de init, DNS e credenciais
+> próprios — e foram derivados da VPS em produção.
+
+
 Ubuntu limpa, usuário `ubuntu` com sudo.
 
 ### 1. Dependências do sistema
@@ -52,11 +61,10 @@ sudo apt install -y nodejs
 sudo usermod -aG docker ubuntu   # relogar depois disso
 ```
 
-**Versão do Python:** a VPS atual roda **Python 3.12.3**, o padrão do Ubuntu
-24.04 — não 3.14. O `python3.14` não existe nos repositórios do Ubuntu 24.04;
-usá-lo exigiria o PPA deadsnakes, que não está instalado. O `README.md` da raiz
-menciona 3.14 como ambiente de desenvolvimento: **dev e produção divergem hoje**,
-e as `requirements.txt` instalam normalmente nas duas.
+**Versão do Python:** o projeto exige **3.12 ou superior** — é o que o Django
+6.0 declara em `Requires-Python`. Não fixamos uma versão exata de propósito: a
+VPS roda o 3.12.3 que vem no Ubuntu 24.04, e as máquinas de desenvolvimento
+rodam versões mais novas. O `python3` do sistema serve nos dois casos, sem PPA.
 
 ### 2. Banco de dados
 
@@ -151,7 +159,25 @@ echo 'ubuntu ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart trocai-api, /usr/bin
 sudo chmod 440 /etc/sudoers.d/trocai-deploy
 ```
 
-### 8. Primeiro deploy
+### 8. Diretório de backups
+
+O `deploy.sh` faz um `pg_dump` antes de cada `migrate` e guarda os cinco mais
+recentes. O diretório precisa existir e pertencer ao usuário do deploy:
+
+```bash
+sudo mkdir -p /var/backups/trocai
+sudo chown ubuntu:ubuntu /var/backups/trocai
+```
+
+Sem isso o deploy aborta com uma mensagem explicando o comando acima. Para
+restaurar um backup:
+
+```bash
+gunzip -c /var/backups/trocai/ARQUIVO.sql.gz \
+  | docker exec -i trocai-db psql -U trocai trocai
+```
+
+### 9. Primeiro deploy
 
 ```bash
 bash /opt/Trocai/infra/deploy.sh
@@ -207,8 +233,9 @@ working tree suja.
 ## Limitações conhecidas
 
 - **Sem rollback automático.** Se as migrations aplicarem e o build falhar
-  depois, o banco fica à frente do código. Reverter exige commit de correção
-  ou rollback manual da migration.
+  depois, o banco fica à frente do código. O deploy tira um `pg_dump` antes de
+  migrar (ver passo 8), então dá para voltar o banco à mão, mas nada reverte
+  sozinho.
 - **`collectstatic` sem `--clear`.** Arquivos estáticos removidos do código
   continuam no `STATIC_ROOT`. Foi uma troca consciente: o `--clear` apagava o
   diretório inteiro antes de recriá-lo, deixando alguns segundos de 404 nos
