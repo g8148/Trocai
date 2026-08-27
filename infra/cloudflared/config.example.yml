@@ -1,0 +1,33 @@
+# Cloudflare Tunnel — exemplo de configuracao.
+#
+# Instalar em: /etc/cloudflared/config.yml
+#
+# ATENCAO: na VPS atual este tunel e COMPARTILHADO com outros projetos que
+# rodam na mesma maquina. Este exemplo lista apenas as rotas do Trocai. Ao
+# aplicar numa VPS que ja tenha um tunel, ACRESCENTE os blocos de ingress
+# abaixo aos existentes, sempre ANTES da regra final `http_status:404`
+# (o cloudflared usa a primeira regra que casar).
+#
+# O UUID do tunel e o arquivo de credenciais NAO vao para o Git. Gere os seus:
+#
+#   cloudflared tunnel login
+#   cloudflared tunnel create trocai
+#   # anote o UUID impresso e substitua os placeholders abaixo
+#   cloudflared tunnel route dns <TUNNEL_ID> api-trocai.exemplo.dev
+#   cloudflared tunnel route dns <TUNNEL_ID> trocai.exemplo.dev
+#   sudo systemctl enable --now cloudflared
+
+tunnel: <TUNNEL_ID>
+credentials-file: /etc/cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  # API Django (Gunicorn, servico trocai-api)
+  - hostname: api-trocai.exemplo.dev
+    service: http://localhost:8000
+
+  # Frontend Next.js (servico trocai-web)
+  - hostname: trocai.exemplo.dev
+    service: http://localhost:3002
+
+  # Regra final obrigatoria: tudo que nao casar acima retorna 404.
+  - service: http_status:404

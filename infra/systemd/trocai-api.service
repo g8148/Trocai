@@ -1,0 +1,22 @@
+# Instalar em: /etc/systemd/system/trocai-api.service
+# Depois: sudo systemctl daemon-reload && sudo systemctl enable --now trocai-api
+
+[Unit]
+Description=Trocai API (Gunicorn/Django)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/Trocai/app/api
+ExecStart=/opt/Trocai/app/api/.venv/bin/gunicorn \
+    --workers 3 \
+    --bind 127.0.0.1:8000 \
+    --access-logfile /var/log/trocai-api-access.log \
+    --error-logfile /var/log/trocai-api-error.log \
+    core.wsgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

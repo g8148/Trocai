@@ -6,7 +6,7 @@ Plataforma de empréstimo de ferramentas e serviços comunitários. Projeto acad
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Frontend | Next.js + Bun |
+| Frontend | Next.js + npm |
 | Backend | Python 3.14, Django 6, Django REST Framework 3.16 |
 | Banco | PostgreSQL 18.3 (Docker) |
 | Auth | JWT via SimpleJWT + dj-rest-auth + django-allauth |
@@ -34,7 +34,7 @@ doc/          # Documentação e diagramas
 
 - Docker e Docker Compose
 - Python 3.14 + virtualenv
-- Bun
+- Node.js 22+ (npm)
 
 ### Backend
 
@@ -56,8 +56,8 @@ Documentação Swagger em `http://localhost:8000/api/docs/`
 
 ```bash
 cd app/web
-bun install
-bun dev
+npm ci
+npm run dev
 ```
 
 Frontend disponível em `http://localhost:3000`
