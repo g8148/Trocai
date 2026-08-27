@@ -1,0 +1,19 @@
+# Instalar em: /etc/systemd/system/trocai-web.service
+# Depois: sudo systemctl daemon-reload && sudo systemctl enable --now trocai-web
+
+[Unit]
+Description=Trocai Web (Next.js)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/Trocai/app/web
+Environment=PORT=3002
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node node_modules/.bin/next start --port 3002
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

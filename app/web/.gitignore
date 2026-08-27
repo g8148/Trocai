@@ -34,3 +34,6 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Lockfile do Bun — projeto padronizado em npm (ver infra/README.md)
+bun.lock
