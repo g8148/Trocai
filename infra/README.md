@@ -165,9 +165,13 @@ O `deploy.sh` faz um `pg_dump` antes de cada `migrate` e guarda os cinco mais
 recentes. O diretório precisa existir e pertencer ao usuário do deploy:
 
 ```bash
-sudo mkdir -p /var/backups/trocai
-sudo chown ubuntu:ubuntu /var/backups/trocai
+sudo install -d -m 700 -o ubuntu -g ubuntu /var/backups/trocai
 ```
+
+O modo `700` não é detalhe: o dump contém CPF, e-mail, coordenadas e hashes de
+senha dos usuários. Com as permissões padrão ele sairia legível por qualquer
+usuário ou container da máquina. O `deploy.sh` complementa isso gerando cada
+arquivo sob `umask 077`.
 
 Sem isso o deploy aborta com uma mensagem explicando o comando acima. Para
 restaurar um backup:
