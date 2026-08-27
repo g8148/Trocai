@@ -31,7 +31,8 @@ Cloudflare Tunnel  (cloudflared.service)
    |-- trocai.<dominio>      --> localhost:3002  trocai-web  (Next.js)
                                        |
                                        v
-                                  PostgreSQL (localhost:5432)
+                                  PostgreSQL em container
+                                  (127.0.0.1:$DB_PORT)
 ```
 
 ## Montando uma VPS do zero
@@ -72,14 +73,16 @@ O Postgres **não** é instalado via apt: roda em container, a partir do
 `app/api/docker-compose.yml` já versionado no repositório. É o mesmo arquivo
 usado em desenvolvimento e em produção. Ele sobe no passo 4, depois do clone.
 
-> **Hardening pendente.** Esse compose publica a porta como `5432:5432` (bind
-> em `0.0.0.0`) e traz a senha `trocai_dev_2026` fixa no arquivo versionado.
-> Na VPS atual o banco **não** está acessível pela internet — a Security List da
-> Oracle bloqueia a 5432 na borda (verificado: conexão externa dá timeout).
-> Ainda assim vale corrigir, porque a proteção é de camada única: portas
-> publicadas pelo Docker contornam a chain INPUT do iptables, então o firewall
-> da nuvem é a única barreira. Numa VPS nova, antes de subir, troque a porta
-> para `127.0.0.1:5432:5432` e mova a senha para variável de ambiente.
+A porta do host vem do `DB_PORT` do `.env` — o compose lê o `.env` do próprio
+diretório — com `5432` como padrão, e o bind é `127.0.0.1`, então o banco só
+aceita conexões da própria máquina. Na VPS a porta é **7510**, porque a 5432 já
+está ocupada por outro projeto na mesma máquina; numa VPS nova o padrão serve.
+
+> **Senha versionada.** O compose fixa `POSTGRES_PASSWORD=trocai_dev_2026` em
+> arquivo versionado num repositório público. Decisão consciente: é um projeto
+> de faculdade que não vai para produção real. Se um dia for, troque a senha
+> **antes** e lembre que `POSTGRES_PASSWORD` só tem efeito na primeira
+> inicialização do volume — num banco já existente é preciso `ALTER USER`.
 
 ### 3. Clonar o repositório
 
@@ -247,11 +250,9 @@ working tree suja.
   janela de manutenção.
 - **Senha do banco versionada em repositório público.** O
   `app/api/docker-compose.yml` fixa `POSTGRES_PASSWORD=trocai_dev_2026` e o
-  repositório é público, então a senha é legível por qualquer pessoa. O acesso
-  externo à 5432 está bloqueado pela Security List da Oracle, mas o bind é
-  `0.0.0.0` e o iptables local não cobre portas publicadas pelo Docker — a
-  proteção é de camada única. Corrigir fora desta issue: bind em `127.0.0.1`,
-  senha por variável de ambiente e rotação da senha atual.
+  repositório é público. Aceito conscientemente: projeto de faculdade, sem
+  dados reais. O bind em `127.0.0.1` limita o acesso à própria máquina, e a
+  Security List da Oracle bloqueia a porta na borda de qualquer forma.
 - **Nginx roda na VPS mas não serve o Trocaí.** O Cloudflare Tunnel fala direto
   com `localhost:8000` e `localhost:3002`; nenhum site habilitado no nginx
   referencia o projeto. Nada a configurar nele.
