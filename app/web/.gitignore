@@ -35,5 +35,11 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Serwist (gerado durante o build)
+/public/sw.js
+/public/sw.js.map
+/public/swe-worker-*.js
+/public/swe-worker-*.js.map
+
 # Lockfile do Bun — projeto padronizado em npm (ver infra/README.md)
 bun.lock
