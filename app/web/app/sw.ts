@@ -25,6 +25,7 @@ const privatePagePrefixes = [
   "/notifications",
   "/reports",
   "/reviews",
+  "/search",
 ]
 
 const runtimeCaching = [
@@ -36,7 +37,8 @@ const runtimeCaching = [
   {
     matcher: ({ request, url }: { request: Request; url: URL }) =>
       request.mode === "navigate" &&
-      privatePagePrefixes.some((prefix) => url.pathname.startsWith(prefix)),
+      (url.pathname === "/" ||
+        privatePagePrefixes.some((prefix) => url.pathname.startsWith(prefix))),
     handler: new NetworkOnly(),
   },
   {
